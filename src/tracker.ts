@@ -1,14 +1,22 @@
 import { TrackerConfig } from './config';
+import parser from 'filesize-parser';
 
 export interface UserStats {
   uploaded: number;
   downloaded: number;
   ratio: number;
-  bonus_points: number;
-  seeding_count: number;
+  seedbonus: number;
+  seeding: number;
+  leeching: number;
+  buffer: number;
+  hit_and_runs: number;
 }
 
-export class Unit3DClient {
+export interface TrackerClient {
+  getUserStats(): Promise<UserStats>;
+}
+
+export class Unit3DClient implements TrackerClient {
   private config: TrackerConfig;
 
   constructor(config: TrackerConfig) {
@@ -16,13 +24,9 @@ export class Unit3DClient {
   }
 
   async getUserStats(): Promise<UserStats> {
-    const { url, apiKey, username } = this.config;
-    // Ensure URL doesn't have a trailing slash
+    const { url, apiKey } = this.config;
     const baseUrl = url.replace(/\/$/, '');
-
-    // Construct the API URL.
-    // Standard Unit3D: /api/users/{username}?api_token={key}
-    const apiUrl = `${baseUrl}/api/users/${username}?api_token=${apiKey}`;
+    const apiUrl = `${baseUrl}/api/user?api_token=${apiKey}`;
 
     try {
       const response = await fetch(apiUrl, {
@@ -36,40 +40,32 @@ export class Unit3DClient {
       }
 
       const data = await response.json();
-
-      // Unit3D API response structure varies but typically data is in a 'data' property
-      // or directly in the root.
-      // Example structure: { data: { ...attributes } } or { ...attributes }
-
       const attributes = data.data ? data.data : data;
 
-      // Extract fields with fallbacks
-      // uploaded/downloaded are bytes. ratio is float. bonus_points might be 'seed_bonus' or 'bonus_points'.
-
+      // Parse fields
       const uploaded = this.parseBytes(attributes.uploaded);
       const downloaded = this.parseBytes(attributes.downloaded);
+      const buffer = this.parseBytes(attributes.buffer);
       const ratio = parseFloat(attributes.ratio || '0');
 
-      let bonus_points = 0;
-      if (attributes.bonus_points !== undefined) bonus_points = parseFloat(attributes.bonus_points);
-      else if (attributes.seed_bonus !== undefined) bonus_points = parseFloat(attributes.seed_bonus);
+      let seedbonus = 0;
+      if (attributes.seedbonus !== undefined) seedbonus = parseFloat(attributes.seedbonus);
+      else if (attributes.bonus_points !== undefined) seedbonus = parseFloat(attributes.bonus_points);
+      else if (attributes.seed_bonus !== undefined) seedbonus = parseFloat(attributes.seed_bonus);
 
-      // Seeding count. Sometimes it's in a relationship or a simple count.
-      // Often 'torrents_seeding_count' or derived from relationships.
-      // Let's check for common fields.
-      let seeding_count = 0;
-      if (attributes.torrents_seeding_count !== undefined) {
-          seeding_count = parseInt(attributes.torrents_seeding_count, 10);
-      } else if (attributes.seeding_count !== undefined) {
-          seeding_count = parseInt(attributes.seeding_count, 10);
-      }
+      const seeding = parseInt(attributes.seeding, 10) || 0;
+      const leeching = parseInt(attributes.leeching, 10) || 0;
+      const hit_and_runs = parseInt(attributes.hit_and_runs, 10) || 0;
 
       return {
         uploaded,
         downloaded,
         ratio,
-        bonus_points,
-        seeding_count
+        seedbonus,
+        seeding,
+        leeching,
+        buffer,
+        hit_and_runs
       };
 
     } catch (error) {
@@ -80,7 +76,19 @@ export class Unit3DClient {
 
   private parseBytes(value: any): number {
     if (typeof value === 'number') return value;
-    if (typeof value === 'string') return parseInt(value, 10);
+    if (typeof value === 'string') {
+        try {
+            return parser(value);
+        } catch (e) {
+            return 0;
+        }
+    }
     return 0;
   }
+}
+
+export function createTrackerClient(config: TrackerConfig): TrackerClient {
+    // In the future we can switch based on config.type
+    // For now we only support UNIT3D (config filtering ensures only UNIT3D gets here ideally)
+    return new Unit3DClient(config);
 }
