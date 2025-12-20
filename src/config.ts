@@ -84,3 +84,23 @@ export function parseConfig(): TrackerConfig[] {
 
   return validTrackers;
 }
+
+export interface ProxyConfig {
+  url: string;
+  username?: string;
+  password?: string;
+}
+
+export function getProxyConfig(): ProxyConfig | undefined {
+  const url = process.env.PROXY_URL;
+  if (!url) return undefined;
+
+  const username = process.env.PROXY_USERNAME;
+  const password = process.env.PROXY_PASSWORD;
+
+  return {
+    url,
+    username,
+    password
+  };
+}

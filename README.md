@@ -35,6 +35,16 @@ Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{O
 
 **Note:** Currently only `UNIT3D` tracker type is supported. Other types will be ignored if specified or auto-detected.
 
+### Global Proxy Configuration
+
+You can configure a global proxy that will be used for all tracker requests. This is useful if your container is running behind a VPN (e.g., connected to a qBittorrent/Gluetun container).
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `PROXY_URL` | The URL of the proxy server (HTTP/HTTPS) | `http://qbittorrent:8118` |
+| `PROXY_USERNAME` | Proxy username (optional) | `myuser` |
+| `PROXY_PASSWORD` | Proxy password (optional) | `mypassword` |
+
 ### Example Configuration
 
 ```bash
