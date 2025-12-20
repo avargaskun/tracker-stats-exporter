@@ -42,9 +42,10 @@ describe('Config Parser', () => {
     expect(configs.find(c => c.name === 'T2')).toBeDefined();
   });
 
-  it('should ignore incomplete configs (missing apiKey)', () => {
+  it('should ignore incomplete configs for UNIT3D (missing apiKey)', () => {
     process.env.TRACKER_INC_URL = 'https://inc.com';
-    // Missing API_KEY for INC
+    process.env.TRACKER_INC_TYPE = 'UNIT3D';
+    // Missing API_KEY for INC (required for UNIT3D)
 
     process.env.TRACKER_FULL_URL = 'https://full.com';
     process.env.TRACKER_FULL_API_KEY = 'k';
@@ -52,6 +53,13 @@ describe('Config Parser', () => {
     const configs = parseConfig();
     expect(configs).toHaveLength(1);
     expect(configs[0].name).toBe('FULL');
+  });
+
+  it('should ignore incomplete configs (missing URL)', () => {
+    process.env.TRACKER_NOURL_API_KEY = 'k';
+
+    const configs = parseConfig();
+    expect(configs).toHaveLength(0);
   });
 
   it('should ignore unsupported types', () => {
@@ -69,12 +77,6 @@ describe('Config Parser', () => {
   });
 
   it('should auto-detect DIGITALCORE type but exclude it for now (since we only support UNIT3D)', () => {
-      // NOTE: The implementation filters anything that isn't UNIT3D.
-      // Even if we detect DIGITALCORE, it should be excluded per requirements (point 5: "Currently the project will only support UNIT3D types")
-      // unless the user intended otherwise. But wait, point 3 says "if the type is not specified ... set the type to DIGITALCORE".
-      // Point 5 says "if another type is specified a warning should logged and the tracker should be ignored."
-      // So if it auto-detects DIGITALCORE, it effectively becomes type=DIGITALCORE, and thus should be ignored.
-
       process.env.TRACKER_DC_URL = 'https://digitalcore.club';
       process.env.TRACKER_DC_API_KEY = 'k';
 

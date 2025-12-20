@@ -20,6 +20,9 @@ export class Unit3DClient implements TrackerClient {
   private config: TrackerConfig;
 
   constructor(config: TrackerConfig) {
+    if (!config.apiKey) {
+        throw new Error(`API key is required for Unit3D client (tracker: ${config.name})`);
+    }
     this.config = config;
   }
 

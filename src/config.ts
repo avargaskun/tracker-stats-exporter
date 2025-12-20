@@ -1,7 +1,7 @@
 export interface TrackerConfig {
   name: string;
   url: string;
-  apiKey: string;
+  apiKey?: string;
   type?: string;
 }
 
@@ -43,9 +43,8 @@ export function parseConfig(): TrackerConfig[] {
   const validTrackers: TrackerConfig[] = [];
 
   for (const [name, config] of Object.entries(trackers)) {
-    // If URL is missing, we can't determine hostname or connect, so skip.
-    // apiKey is also generally required for these types of trackers.
-    if (config.url && config.apiKey) {
+    // URL is always required to identify the tracker and connectivity
+    if (config.url) {
       let type = config.type;
 
       if (!type) {
@@ -66,16 +65,20 @@ export function parseConfig(): TrackerConfig[] {
       type = type.toUpperCase();
 
       if (type === 'UNIT3D') {
-        validTrackers.push({
-          ...config,
-          type
-        } as TrackerConfig);
+        if (config.apiKey) {
+            validTrackers.push({
+              ...config,
+              type
+            } as TrackerConfig);
+        } else {
+            console.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: API_KEY (required for UNIT3D)`);
+        }
       } else {
         console.warn(`Skipping tracker ${name} with unsupported type: ${type}`);
       }
 
     } else {
-      console.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: ${!config.url ? 'URL ' : ''}${!config.apiKey ? 'API_KEY ' : ''}`);
+      console.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: URL`);
     }
   }
 
