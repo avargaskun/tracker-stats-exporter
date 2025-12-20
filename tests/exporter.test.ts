@@ -1,9 +1,8 @@
 import { PrometheusExporter } from '../src/exporter';
 import { TrackerConfig } from '../src/config';
-import { Unit3DClient } from '../src/tracker';
-import { Registry } from 'prom-client';
+import { createTrackerClient, TrackerClient } from '../src/tracker';
 
-// Mock Unit3DClient
+// Mock createTrackerClient
 jest.mock('../src/tracker');
 
 describe('PrometheusExporter', () => {
@@ -11,11 +10,11 @@ describe('PrometheusExporter', () => {
     name: 'TEST',
     url: 'https://test.com',
     apiKey: 'key',
-    username: 'user'
+    type: 'UNIT3D'
   }];
 
   beforeEach(() => {
-    (Unit3DClient as jest.Mock).mockClear();
+    (createTrackerClient as jest.Mock).mockClear();
     jest.useFakeTimers();
   });
 
@@ -28,12 +27,15 @@ describe('PrometheusExporter', () => {
     const mockGetUserStats = jest.fn().mockResolvedValue({
       uploaded: 1000,
       downloaded: 500,
+      buffer: 500,
       ratio: 2.0,
-      bonus_points: 100,
-      seeding_count: 5
+      seedbonus: 100,
+      seeding: 5,
+      leeching: 1,
+      hit_and_runs: 0
     });
 
-    (Unit3DClient as jest.Mock).mockImplementation(() => ({
+    (createTrackerClient as jest.Mock).mockImplementation(() => ({
       getUserStats: mockGetUserStats
     }));
 
@@ -47,12 +49,15 @@ describe('PrometheusExporter', () => {
     const mockGetUserStats = jest.fn().mockResolvedValue({
       uploaded: 1000,
       downloaded: 500,
+      buffer: 0,
       ratio: 2.0,
-      bonus_points: 100,
-      seeding_count: 5
+      seedbonus: 100,
+      seeding: 5,
+      leeching: 0,
+      hit_and_runs: 0
     });
 
-    (Unit3DClient as jest.Mock).mockImplementation(() => ({
+    (createTrackerClient as jest.Mock).mockImplementation(() => ({
       getUserStats: mockGetUserStats
     }));
 
@@ -80,7 +85,7 @@ describe('PrometheusExporter', () => {
   it('should handle update errors gracefully', async () => {
      const mockGetUserStats = jest.fn().mockRejectedValue(new Error('Fetch failed'));
 
-    (Unit3DClient as jest.Mock).mockImplementation(() => ({
+    (createTrackerClient as jest.Mock).mockImplementation(() => ({
       getUserStats: mockGetUserStats
     }));
 

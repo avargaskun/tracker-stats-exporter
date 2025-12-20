@@ -1,18 +1,21 @@
 import * as http from 'http';
 import { Registry, Gauge } from 'prom-client';
-import { Unit3DClient } from './tracker';
+import { createTrackerClient, TrackerClient } from './tracker';
 import { TrackerConfig } from './config';
 
 export class PrometheusExporter {
   private registry: Registry;
-  private clients: Unit3DClient[];
+  private clients: TrackerClient[];
   private configs: TrackerConfig[];
 
   private uploadGauge: Gauge;
   private downloadGauge: Gauge;
+  private bufferGauge: Gauge;
   private ratioGauge: Gauge;
   private bonusGauge: Gauge;
   private seedingGauge: Gauge;
+  private leechingGauge: Gauge;
+  private hnrGauge: Gauge;
   private upStatusGauge: Gauge;
 
   private lastScrapeTime: number = 0;
@@ -21,7 +24,7 @@ export class PrometheusExporter {
 
   constructor(configs: TrackerConfig[]) {
     this.configs = configs;
-    this.clients = configs.map(config => new Unit3DClient(config));
+    this.clients = configs.map(config => createTrackerClient(config));
     this.registry = new Registry();
 
     this.uploadGauge = new Gauge({
@@ -38,6 +41,13 @@ export class PrometheusExporter {
       registers: [this.registry]
     });
 
+    this.bufferGauge = new Gauge({
+        name: 'tracker_buffer_bytes',
+        help: 'Buffer in bytes',
+        labelNames: ['tracker'],
+        registers: [this.registry]
+    });
+
     this.ratioGauge = new Gauge({
       name: 'tracker_ratio',
       help: 'User ratio',
@@ -47,7 +57,7 @@ export class PrometheusExporter {
 
     this.bonusGauge = new Gauge({
       name: 'tracker_bonus_points',
-      help: 'User bonus points',
+      help: 'User bonus points (seed bonus)',
       labelNames: ['tracker'],
       registers: [this.registry]
     });
@@ -57,6 +67,20 @@ export class PrometheusExporter {
       help: 'Number of torrents seeding',
       labelNames: ['tracker'],
       registers: [this.registry]
+    });
+
+    this.leechingGauge = new Gauge({
+        name: 'tracker_leeching_count',
+        help: 'Number of torrents leeching',
+        labelNames: ['tracker'],
+        registers: [this.registry]
+    });
+
+    this.hnrGauge = new Gauge({
+        name: 'tracker_hit_and_runs_count',
+        help: 'Number of hit and runs',
+        labelNames: ['tracker'],
+        registers: [this.registry]
     });
 
     this.upStatusGauge = new Gauge({
@@ -81,9 +105,12 @@ export class PrometheusExporter {
 
         this.uploadGauge.set({ tracker: trackerName }, stats.uploaded);
         this.downloadGauge.set({ tracker: trackerName }, stats.downloaded);
+        this.bufferGauge.set({ tracker: trackerName }, stats.buffer);
         this.ratioGauge.set({ tracker: trackerName }, stats.ratio);
-        this.bonusGauge.set({ tracker: trackerName }, stats.bonus_points);
-        this.seedingGauge.set({ tracker: trackerName }, stats.seeding_count);
+        this.bonusGauge.set({ tracker: trackerName }, stats.seedbonus);
+        this.seedingGauge.set({ tracker: trackerName }, stats.seeding);
+        this.leechingGauge.set({ tracker: trackerName }, stats.leeching);
+        this.hnrGauge.set({ tracker: trackerName }, stats.hit_and_runs);
         this.upStatusGauge.set({ tracker: trackerName }, 1);
 
       } catch (error) {

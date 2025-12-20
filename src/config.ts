@@ -1,8 +1,8 @@
 export interface TrackerConfig {
   name: string;
   url: string;
-  apiKey: string;
-  username: string;
+  apiKey?: string;
+  type?: string;
 }
 
 export function parseConfig(): TrackerConfig[] {
@@ -13,32 +13,20 @@ export function parseConfig(): TrackerConfig[] {
 
     const parts = key.split('_');
     // Expected format: TRACKER_{NAME}_{OPTION}
-    // Minimal length: TRACKER, NAME, OPTION (3 parts)
     if (parts.length < 3) continue;
 
-    // NAME is the second part (index 1)
-    // OPTION is the rest joined by underscore (in case option has underscores, though spec says URL, API_KEY, USERNAME)
-    // Actually, let's look at the spec: TRACKER_{NAME}_{OPTION}
-    // Options are URL, API_KEY, USERNAME.
-    // So if NAME contains underscores, this split might be tricky.
-    // However, usually NAME is an identifier.
-    // Let's assume NAME does not contain underscores, or we parse from the end.
-    // The spec says: TRACKER_{NAME}_URL, TRACKER_{NAME}_API_KEY, TRACKER_{NAME}_USERNAME.
-    // API_KEY has an underscore.
-
-    // Let's match against the known suffixes.
     let name = '';
     let option = '';
 
     if (key.endsWith('_URL')) {
         option = 'url';
-        name = key.slice(8, -4); // Remove TRACKER_ and _URL
+        name = key.slice(8, -4);
     } else if (key.endsWith('_API_KEY')) {
         option = 'apiKey';
-        name = key.slice(8, -8); // Remove TRACKER_ and _API_KEY
-    } else if (key.endsWith('_USERNAME')) {
-        option = 'username';
-        name = key.slice(8, -9); // Remove TRACKER_ and _USERNAME
+        name = key.slice(8, -8);
+    } else if (key.endsWith('_TYPE')) {
+        option = 'type';
+        name = key.slice(8, -5);
     } else {
         continue;
     }
@@ -55,10 +43,42 @@ export function parseConfig(): TrackerConfig[] {
   const validTrackers: TrackerConfig[] = [];
 
   for (const [name, config] of Object.entries(trackers)) {
-    if (config.url && config.apiKey && config.username) {
-      validTrackers.push(config as TrackerConfig);
+    // URL is always required to identify the tracker and connectivity
+    if (config.url) {
+      let type = config.type;
+
+      if (!type) {
+        try {
+          const hostname = new URL(config.url).hostname;
+          if (hostname === 'digitalcore.club') {
+            type = 'DIGITALCORE';
+          } else {
+            type = 'UNIT3D';
+          }
+        } catch (e) {
+          console.warn(`Invalid URL for tracker ${name}: ${config.url}`);
+          continue;
+        }
+      }
+
+      // Enforce uppercase for comparison consistency
+      type = type.toUpperCase();
+
+      if (type === 'UNIT3D') {
+        if (config.apiKey) {
+            validTrackers.push({
+              ...config,
+              type
+            } as TrackerConfig);
+        } else {
+            console.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: API_KEY (required for UNIT3D)`);
+        }
+      } else {
+        console.warn(`Skipping tracker ${name} with unsupported type: ${type}`);
+      }
+
     } else {
-      console.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: ${!config.url ? 'URL ' : ''}${!config.apiKey ? 'API_KEY ' : ''}${!config.username ? 'USERNAME' : ''}`);
+      console.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: URL`);
     }
   }
 
