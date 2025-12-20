@@ -18,19 +18,19 @@ Configuration is handled entirely through environment variables. You can configu
 
 `TRACKER_{NAME}_{OPTION}`
 
-Where `{NAME}` is a unique identifier for the tracker (e.g., `DIGITALCORE`) and `{OPTION}` is one of the required configuration keys.
+Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{OPTION}` is one of the required configuration keys.
 
 ### Required Environment Variables per Tracker
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `TRACKER_{NAME}_URL` | The base URL of the tracker | `https://digitalcore.club` |
-| `TRACKER_{NAME}_API_KEY` | Your API token | `abcdef123456` |
+| `TRACKER_{NAME}_URL` | The base URL of the tracker | `https://seedpool.org` |
 
 ### Optional Environment Variables per Tracker
 
 | Variable | Description | Default |
 |----------|-------------|---------|
+| `TRACKER_{NAME}_API_KEY` | Your API token | _(empty)_ |
 | `TRACKER_{NAME}_TYPE` | The type of tracker (`UNIT3D`) | Auto-detected or `UNIT3D` |
 
 **Note:** Currently only `UNIT3D` tracker type is supported. Other types will be ignored if specified or auto-detected.
