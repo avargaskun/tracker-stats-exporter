@@ -46,7 +46,7 @@ Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{O
 
 ### Global Proxy Configuration
 
-You can configure a global proxy that will be used for all tracker requests. This is useful if your container is running behind a VPN (e.g., connected to a qBittorrent/Gluetun container).
+You can configure a global proxy that will be used for all tracker requests. This is useful if you already have a container running behind a VPN with Privoxy enabled (e.g., https://hotio.dev/containers/qbittorrent/).
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -119,10 +119,9 @@ services:
     ports:
       - "9100:9100"
     environment:
-      - STATS_TTL=15m
-      - TRACKER_DIGITALCORE_URL=https://digitalcore.club
-      - TRACKER_DIGITALCORE_API_KEY=abcdef123456
-      - TRACKER_DIGITALCORE_TYPE=UNIT3D
+      - STATS_TTL=1h # Recommended to avoid getting banned for excessive traffic
+      - TRACKER_SEEDPOOL_URL=https://seedpool.org
+      - TRACKER_SEEDPOOL_API_KEY=abcdef123456
       - TRACKER_ONLYENCODES_URL=https://onlyencodes.cc
       - TRACKER_ONLYENCODES_API_KEY=98765zyxw
     restart: unless-stopped
