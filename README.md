@@ -103,9 +103,9 @@ docker run -d \
 ### Docker Compose
 
 ```yaml
-version: '3'
 services:
   tracker-stats-exporter:
+    container_name: tracker-stats-exporter
     image: ghcr.io/owner/tracker-stats-exporter:latest
     ports:
       - "9100:9100"
@@ -127,7 +127,6 @@ scrape_configs:
   - job_name: 'tracker-stats'
     static_configs:
       - targets: ['tracker-stats-exporter:9100']
-    scrape_interval: 15m # Recommended to avoid hammering tracker APIs
 ```
 
 **Note:** The application caches data for a configurable duration (default 15 minutes, min 5 minutes). Scrape intervals shorter than the configured TTL will return cached data.
