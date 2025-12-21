@@ -1,5 +1,33 @@
-import { parseConfig } from './config';
+import { parseConfig, getProxyConfig } from './config';
 import { PrometheusExporter } from './exporter';
+import { setGlobalDispatcher, ProxyAgent } from 'undici';
+
+// Configure global proxy if present
+const proxyConfig = getProxyConfig();
+if (proxyConfig) {
+  try {
+    // Basic validation of the URL
+    new URL(proxyConfig.url);
+
+    let uri = proxyConfig.url;
+    // Construct authenticated URL if credentials are provided
+    if (proxyConfig.username && proxyConfig.password) {
+       const urlObj = new URL(proxyConfig.url);
+       urlObj.username = proxyConfig.username;
+       urlObj.password = proxyConfig.password;
+       uri = urlObj.toString();
+    } else if (proxyConfig.username || proxyConfig.password) {
+       console.warn('Partial proxy credentials provided. Ignoring username/password.');
+    }
+
+    const agent = new ProxyAgent(uri);
+    setGlobalDispatcher(agent);
+    console.log(`Global proxy configured: ${proxyConfig.url}`);
+  } catch (error) {
+    console.error('Failed to configure global proxy:', error);
+    process.exit(1);
+  }
+}
 
 const configs = parseConfig();
 
