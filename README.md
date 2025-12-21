@@ -88,6 +88,12 @@ The exporter exposes the following metrics at `http://localhost:9100/metrics`:
 | `tracker_hit_and_runs_count` | Gauge | `tracker` | Number of hit and runs |
 | `tracker_up_status` | Gauge | `tracker` | 1 if scrape was successful, 0 otherwise |
 
+### Grafana Dashboard
+
+A simple dashboard is available: [simple_dashboard.json](grafana/simple_dashboard.json)
+
+![](grafana/simple_dashboard.jpg)
+
 ## Deployment via Docker
 
 The image is available on GHCR (GitHub Container Registry).
