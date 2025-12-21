@@ -9,7 +9,7 @@ This application scrapes user metrics (Upload, Download, Buffer, Ratio, Bonus Po
 - **Multi-tracker support**: Monitor multiple trackers simultaneously.
 - **Dynamic Configuration**: Configure trackers via environment variables without touching config files.
 - **Standard Metrics**: Exposes comprehensive user statistics.
-- **Throttling/Caching**: Built-in 5-minute cache to respect tracker API limits and avoid bans.
+- **Throttling/Caching**: Configurable cache duration (default 15 minutes, minimum 5 minutes) to respect tracker API limits and avoid bans.
 - **Dockerized**: Ready to deploy in any container environment.
 
 ## Configuration
@@ -19,6 +19,15 @@ Configuration is handled entirely through environment variables. You can configu
 `TRACKER_{NAME}_{OPTION}`
 
 Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{OPTION}` is one of the required configuration keys.
+
+### Exporter Configuration
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `EXPORTER_PORT` | The port the exporter listens on | `9100` |
+| `EXPORTER_PATH` | The path metrics are exposed at | `/metrics` |
+| `STATS_TTL` | Cache duration for stats (min 5m) | `15m` |
+| `LOG_LEVEL` | Logging level (DEBUG, INFO, WARN, ERROR) | `INFO` |
 
 ### Required Environment Variables per Tracker
 
@@ -48,11 +57,15 @@ You can configure a global proxy that will be used for all tracker requests. Thi
 ### Example Configuration
 
 ```bash
-# Tracker 1: DigitalCore (Type auto-detected as DIGITALCORE but ignored currently as only UNIT3D is supported, unless forced or code updated)
-# Actually, for standard Unit3D trackers:
-TRACKER_MYTRACKER_URL=https://mytracker.site
-TRACKER_MYTRACKER_API_KEY=abcdef123456
-TRACKER_MYTRACKER_TYPE=UNIT3D
+# General Settings
+EXPORTER_PORT=9100
+STATS_TTL=15m
+LOG_LEVEL=INFO
+
+# Tracker 1: DigitalCore
+TRACKER_DIGITALCORE_URL=https://digitalcore.club
+TRACKER_DIGITALCORE_API_KEY=abcdef123456
+TRACKER_DIGITALCORE_TYPE=UNIT3D
 
 # Tracker 2: Another Unit3D
 TRACKER_ONLYENCODES_URL=https://onlyencodes.cc
@@ -100,6 +113,7 @@ services:
     ports:
       - "9100:9100"
     environment:
+      - STATS_TTL=15m
       - TRACKER_DIGITALCORE_URL=https://digitalcore.club
       - TRACKER_DIGITALCORE_API_KEY=abcdef123456
       - TRACKER_DIGITALCORE_TYPE=UNIT3D
@@ -120,7 +134,7 @@ scrape_configs:
     scrape_interval: 15m # Recommended to avoid hammering tracker APIs
 ```
 
-**Note:** The application caches data for 5 minutes. Scrape intervals shorter than 5 minutes will return cached data.
+**Note:** The application caches data for a configurable duration (default 15 minutes, min 5 minutes). Scrape intervals shorter than the configured TTL will return cached data.
 
 ## Development
 

@@ -14,11 +14,13 @@ describe('PrometheusExporter', () => {
   }];
 
   beforeEach(() => {
+    process.env.STATS_TTL = '5m'; // Force 5m cache for tests
     (createTrackerClient as jest.Mock).mockClear();
     jest.useFakeTimers();
   });
 
   afterEach(() => {
+    delete process.env.STATS_TTL;
     jest.useRealTimers();
   });
 

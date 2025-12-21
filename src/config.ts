@@ -1,3 +1,8 @@
+import ms from 'ms';
+import { getLogger } from './logger';
+
+const logger = getLogger('Config');
+
 export interface TrackerConfig {
   name: string;
   url: string;
@@ -56,7 +61,7 @@ export function parseConfig(): TrackerConfig[] {
             type = 'UNIT3D';
           }
         } catch (e) {
-          console.warn(`Invalid URL for tracker ${name}: ${config.url}`);
+          logger.warn(`Invalid URL for tracker ${name}: ${config.url}`);
           continue;
         }
       }
@@ -71,14 +76,14 @@ export function parseConfig(): TrackerConfig[] {
               type
             } as TrackerConfig);
         } else {
-            console.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: API_KEY (required for UNIT3D)`);
+            logger.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: API_KEY (required for UNIT3D)`);
         }
       } else {
-        console.warn(`Skipping tracker ${name} with unsupported type: ${type}`);
+        logger.warn(`Skipping tracker ${name} with unsupported type: ${type}`);
       }
 
     } else {
-      console.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: URL`);
+      logger.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: URL`);
     }
   }
 
@@ -102,5 +107,37 @@ export function getProxyConfig(): ProxyConfig | undefined {
     url,
     username,
     password
+  };
+}
+
+export function getExporterConfig() {
+  const port = process.env.EXPORTER_PORT ? parseInt(process.env.EXPORTER_PORT, 10) : 9100;
+  const metricsPath = process.env.EXPORTER_PATH || '/metrics';
+
+  let cacheDuration = 15 * 60 * 1000; // Default 15m
+  const ttl = process.env.STATS_TTL;
+
+  if (ttl) {
+    try {
+      const parsedMs = ms(ttl as any);
+      if (typeof parsedMs === 'number') {
+        if (parsedMs >= 5 * 60 * 1000) {
+          cacheDuration = parsedMs;
+        } else {
+          logger.warn(`STATS_TTL (${ttl}) is less than 5 minutes. Enforcing minimum of 5 minutes.`);
+          cacheDuration = 5 * 60 * 1000;
+        }
+      } else {
+        logger.warn(`Invalid STATS_TTL format (${ttl}). Using default 15m.`);
+      }
+    } catch (e) {
+      logger.warn(`Error parsing STATS_TTL (${ttl}). Using default 15m.`, e);
+    }
+  }
+
+  return {
+    port,
+    metricsPath,
+    cacheDuration
   };
 }

@@ -1,12 +1,15 @@
 import * as http from 'http';
 import { Registry, Gauge } from 'prom-client';
 import { createTrackerClient, TrackerClient } from './tracker';
-import { TrackerConfig } from './config';
+import { TrackerConfig, getExporterConfig } from './config';
+import { getLogger } from './logger';
+import { Logger } from 'winston';
 
 export class PrometheusExporter {
   private registry: Registry;
   private clients: TrackerClient[];
   private configs: TrackerConfig[];
+  private logger: Logger;
 
   private uploadGauge: Gauge;
   private downloadGauge: Gauge;
@@ -19,13 +22,20 @@ export class PrometheusExporter {
   private upStatusGauge: Gauge;
 
   private lastScrapeTime: number = 0;
-  // 5 minutes in milliseconds
-  private cacheDuration: number = 5 * 60 * 1000;
+  private cacheDuration: number;
+  private metricsPath: string;
 
   constructor(configs: TrackerConfig[]) {
     this.configs = configs;
     this.clients = configs.map(config => createTrackerClient(config));
     this.registry = new Registry();
+    this.logger = getLogger('PrometheusExporter');
+
+    const exporterConfig = getExporterConfig();
+    this.cacheDuration = exporterConfig.cacheDuration;
+    this.metricsPath = exporterConfig.metricsPath;
+
+    this.logger.info(`Initialized exporter with cache duration: ${this.cacheDuration}ms and metrics path: ${this.metricsPath}`);
 
     this.uploadGauge = new Gauge({
       name: 'tracker_upload_bytes',
@@ -94,9 +104,11 @@ export class PrometheusExporter {
   async updateMetrics() {
     const now = Date.now();
     if (now - this.lastScrapeTime < this.cacheDuration && this.lastScrapeTime !== 0) {
-      // Return cached metrics (already in registry)
+      this.logger.debug('Returning cached metrics');
       return;
     }
+
+    this.logger.debug('Cache expired or empty. Fetching new metrics...');
 
     await Promise.all(this.clients.map(async (client, index) => {
       const trackerName = this.configs[index].name;
@@ -113,7 +125,10 @@ export class PrometheusExporter {
         this.hnrGauge.set({ tracker: trackerName }, stats.hit_and_runs);
         this.upStatusGauge.set({ tracker: trackerName }, 1);
 
+        this.logger.debug(`Successfully updated metrics for ${trackerName}`);
+
       } catch (error) {
+        this.logger.error(`Failed to update metrics for ${trackerName}: ${error}`);
         // Log error already handled in client, just set status to 0
         this.upStatusGauge.set({ tracker: trackerName }, 0);
       }
@@ -124,13 +139,14 @@ export class PrometheusExporter {
 
   startServer(port: number) {
     const server = http.createServer(async (req, res) => {
-      if (req.url === '/metrics') {
+      if (req.url === this.metricsPath) {
         try {
           await this.updateMetrics();
           const metrics = await this.registry.metrics();
           res.writeHead(200, { 'Content-Type': this.registry.contentType });
           res.end(metrics);
         } catch (ex) {
+          this.logger.error(`Error generating metrics: ${ex}`);
           res.writeHead(500);
           res.end(ex instanceof Error ? ex.message : 'Unknown error');
         }
@@ -141,7 +157,7 @@ export class PrometheusExporter {
     });
 
     server.listen(port, () => {
-      console.log(`Server listening on port ${port}`);
+      this.logger.info(`Server listening on port ${port}, metrics exposed at ${this.metricsPath}`);
     });
 
     return server;
