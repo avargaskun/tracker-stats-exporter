@@ -1,5 +1,7 @@
 import { TrackerConfig } from './config';
 import parser from 'filesize-parser';
+import { getLogger } from './logger';
+import { Logger } from 'winston';
 
 export interface UserStats {
   uploaded: number;
@@ -18,18 +20,22 @@ export interface TrackerClient {
 
 export class Unit3DClient implements TrackerClient {
   private config: TrackerConfig;
+  private logger: Logger;
 
   constructor(config: TrackerConfig) {
     if (!config.apiKey) {
         throw new Error(`API key is required for Unit3D client (tracker: ${config.name})`);
     }
     this.config = config;
+    this.logger = getLogger(`Unit3DClient:${config.name}`);
   }
 
   async getUserStats(): Promise<UserStats> {
     const { url, apiKey } = this.config;
     const baseUrl = url.replace(/\/$/, '');
     const apiUrl = `${baseUrl}/api/user?api_token=${apiKey}`;
+
+    this.logger.debug(`Fetching stats from ${apiUrl}`);
 
     try {
       const response = await fetch(apiUrl, {
@@ -43,6 +49,8 @@ export class Unit3DClient implements TrackerClient {
       }
 
       const data = await response.json();
+      this.logger.debug(`Received data from ${this.config.name}: ${JSON.stringify(data)}`);
+
       const attributes = data.data ? data.data : data;
 
       // Parse fields
@@ -72,7 +80,7 @@ export class Unit3DClient implements TrackerClient {
       };
 
     } catch (error) {
-      console.error(`Error fetching stats for ${this.config.name}:`, error);
+      this.logger.error(`Error fetching stats for ${this.config.name}: ${error}`);
       throw error;
     }
   }
@@ -83,6 +91,7 @@ export class Unit3DClient implements TrackerClient {
         try {
             return parser(value);
         } catch (e) {
+            this.logger.warn(`Failed to parse bytes string: ${value}`);
             return 0;
         }
     }
