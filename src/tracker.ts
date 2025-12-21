@@ -1,7 +1,8 @@
-import { TrackerConfig } from './config';
+import { TrackerConfig, getProxyAgent } from './config';
 import parser from 'filesize-parser';
 import { getLogger } from './logger';
 import { Logger } from 'winston';
+import { fetch } from 'undici';
 
 export interface UserStats {
   uploaded: number;
@@ -38,17 +39,20 @@ export class Unit3DClient implements TrackerClient {
     this.logger.debug(`Fetching stats from ${apiUrl}`);
 
     try {
+      const dispatcher = getProxyAgent();
+
       const response = await fetch(apiUrl, {
         headers: {
           'Accept': 'application/json'
-        }
+        },
+        dispatcher
       });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch stats from ${this.config.name}: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       this.logger.debug(`Received data from ${this.config.name}: ${JSON.stringify(data)}`);
 
       const attributes = data.data ? data.data : data;

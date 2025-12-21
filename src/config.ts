@@ -1,5 +1,6 @@
 import ms from 'ms';
 import { getLogger } from './logger';
+import { ProxyAgent } from 'undici';
 
 const logger = getLogger('Config');
 
@@ -108,6 +109,34 @@ export function getProxyConfig(): ProxyConfig | undefined {
     username,
     password
   };
+}
+
+let sharedProxyAgent: ProxyAgent | undefined;
+
+export function getProxyAgent(): ProxyAgent | undefined {
+  const config = getProxyConfig();
+  if (!config) return undefined;
+
+  if (!sharedProxyAgent) {
+    let uri = config.url;
+    if (config.username && config.password) {
+      try {
+        const urlObj = new URL(config.url);
+        urlObj.username = config.username;
+        urlObj.password = config.password;
+        uri = urlObj.toString();
+      } catch (e) {
+        logger.warn(`Invalid proxy URL: ${config.url}`);
+      }
+    }
+    sharedProxyAgent = new ProxyAgent(uri);
+  }
+
+  return sharedProxyAgent;
+}
+
+export function resetProxyAgent(): void {
+  sharedProxyAgent = undefined;
 }
 
 export function getExporterConfig() {
