@@ -9,6 +9,7 @@ export interface TrackerConfig {
   url: string;
   apiKey?: string;
   type?: string;
+  cookie?: string;
 }
 
 export function parseConfig(): TrackerConfig[] {
@@ -33,6 +34,9 @@ export function parseConfig(): TrackerConfig[] {
     } else if (key.endsWith('_TYPE')) {
         option = 'type';
         name = key.slice(8, -5);
+    } else if (key.endsWith('_COOKIE')) {
+        option = 'cookie';
+        name = key.slice(8, -7);
     } else {
         continue;
     }
@@ -78,6 +82,15 @@ export function parseConfig(): TrackerConfig[] {
             } as TrackerConfig);
         } else {
             logger.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: API_KEY (required for UNIT3D)`);
+        }
+      } else if (type === 'SCRAPING') {
+        if (config.cookie) {
+            validTrackers.push({
+              ...config,
+              type
+            } as TrackerConfig);
+        } else {
+            logger.warn(`Skipping incomplete configuration for tracker: ${name}. Missing: COOKIE (required for SCRAPING)`);
         }
       } else {
         logger.warn(`Skipping tracker ${name} with unsupported type: ${type}`);
@@ -168,5 +181,15 @@ export function getExporterConfig() {
     port,
     metricsPath,
     cacheDuration
+  };
+}
+
+export function getOllamaConfig() {
+  const host = process.env.OLLAMA_HOST || 'http://localhost:11434';
+  const model = process.env.OLLAMA_MODEL || 'gemma3:270m';
+
+  return {
+    host,
+    model
   };
 }

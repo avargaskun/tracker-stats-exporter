@@ -3,6 +3,7 @@ import parser from 'filesize-parser';
 import { getLogger } from './logger';
 import { Logger } from 'winston';
 import { fetch } from 'undici';
+import { ScrapingClient } from './clients/scraping';
 
 export interface UserStats {
   uploaded: number;
@@ -104,7 +105,8 @@ export class Unit3DClient implements TrackerClient {
 }
 
 export function createTrackerClient(config: TrackerConfig): TrackerClient {
-    // In the future we can switch based on config.type
-    // For now we only support UNIT3D (config filtering ensures only UNIT3D gets here ideally)
-    return new Unit3DClient(config);
+  if (config.type === 'SCRAPING') {
+    return new ScrapingClient(config);
+  }
+  return new Unit3DClient(config);
 }
