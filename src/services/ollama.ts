@@ -5,17 +5,15 @@ import { z } from 'zod';
 
 const logger = getLogger('OllamaService');
 
-const StatsSchema = z.object({
-  uploaded: z.string(),
-  downloaded: z.string(),
-  ratio: z.string().transform((val) => {
-    // Handle "Inf." or similar
-    const num = parseFloat(val.replace(/,/g, ''));
-    return isNaN(num) ? '0' : num.toString();
-  })
+const TrackerStatsSchema = z.object({
+  uploaded: z.number(),
+  uploaded_units: z.string(),
+  downloaded: z.number(),
+  downloaded_units: z.string(),
+  ratio: z.number(),
 });
 
-export type ExtractedStats = z.infer<typeof StatsSchema>;
+export type TrackerStats = z.infer<typeof TrackerStatsSchema>;
 
 export class OllamaService {
   private client: Ollama;
@@ -38,26 +36,72 @@ export class OllamaService {
     }
   }
 
-  async extractStats(markdown: string): Promise<ExtractedStats> {
-    const prompt = `You are a data extractor. Extract 'uploaded', 'downloaded', and 'ratio' from the following text. Return ONLY valid JSON. Use strings for values including units (e.g., '1.4 TB').
+  async extractStats(markdown: string): Promise<TrackerStats> {
+    const summary = await this.summarize(markdown);
+    return await this.extract(summary);
+  }
 
-Text:
-${markdown}
+  private async summarize(markdown: string): Promise<string> {
+    const prompt = `You are a data extractor. The following is the markdown version of a webpage showing the user profile for a bittorrent tracker. Your task is to extract the following information:
 
-JSON Output:`;
+- Amount of data uploaded by the user
+- Amount of data downloaded by the user
+- Ratio of data sharing
+
+Return the information in bullet points. Do not return any other information than what was mentioned earlier.
+
+Input:
+
+${markdown}`;
 
     try {
+      logger.debug(`Sending prompt to model: ${prompt}`);
+
       const response = await this.client.generate({
         model: this.model,
         prompt: prompt,
-        format: 'json',
         stream: false
       });
 
-      const json = JSON.parse(response.response);
-      const result = StatsSchema.parse(json);
-      return result;
+      logger.debug(`Response from service: ${response.response}`);
 
+      return response.response;
+    } catch (error) {
+      logger.error(`Error during inference or parsing: ${error}`);
+      throw error;
+    }
+  }
+
+  private async extract(summary: string): Promise<TrackerStats> {
+    const prompt = `You are a data extractor. You generate VALID JSON as output. From the following input, your task is to generate a JSON object with the following attributes:
+
+- upload_size (number)
+- upload_unit (string, like "GB", "TB", etc.)
+- download_size (number)
+- download_unit (string, like "GB", "TB", etc.)
+- ratio
+
+The JSON object must ONLY contain one or more of the attributes above, no other attribute is allowed.
+
+Input:
+
+${summary}`
+
+    try {
+      logger.debug(`Sending prompt to model: ${prompt}`);
+
+      const response = await this.client.generate({
+        model: this.model,
+        prompt: prompt,
+        stream: false,
+        format: z.toJSONSchema(TrackerStatsSchema)
+      });
+
+      logger.debug(`Response from service: ${response.response}`);
+
+      const json = JSON.parse(response.response);
+      const result = TrackerStatsSchema.parse(json);
+      return result;
     } catch (error) {
       logger.error(`Error during inference or parsing: ${error}`);
       throw error;

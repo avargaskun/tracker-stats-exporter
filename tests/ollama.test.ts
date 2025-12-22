@@ -38,36 +38,23 @@ describe('OllamaService', () => {
   it('should extract stats correctly', async () => {
     const mockResponse = {
       response: JSON.stringify({
-        uploaded: '1.5 TB',
-        downloaded: '500 GB',
-        ratio: '3.0'
+        uploaded: 1.5,
+        uploaded_units: 'TB',
+        downloaded: 500,
+        downloaded_units: 'GiB',
+        ratio: 3.0
       })
     };
     mockOllamaInstance.generate.mockResolvedValue(mockResponse);
 
     const stats = await service.extractStats('some markdown text');
 
-    expect(stats.uploaded).toBe('1.5 TB');
-    expect(stats.downloaded).toBe('500 GB');
-    expect(stats.ratio).toBe('3');
-    expect(mockOllamaInstance.generate).toHaveBeenCalledWith(expect.objectContaining({
-      prompt: expect.stringContaining('You are a data extractor'),
-      format: 'json'
-    }));
-  });
-
-  it('should handle infinite ratio', async () => {
-    const mockResponse = {
-      response: JSON.stringify({
-        uploaded: '1.0 TB',
-        downloaded: '0 B',
-        ratio: 'Inf.'
-      })
-    };
-    mockOllamaInstance.generate.mockResolvedValue(mockResponse);
-
-    const stats = await service.extractStats('text');
-    expect(stats.ratio).toBe('0');
+    expect(stats.uploaded).toBe(1.5);
+    expect(stats.uploaded_units).toBe("TB");
+    expect(stats.downloaded).toBe(500);
+    expect(stats.downloaded_units).toBe("GiB");
+    expect(stats.ratio).toBe(3);
+    expect(mockOllamaInstance.generate).toHaveBeenCalledTimes(2);
   });
 
   it('should throw error on invalid JSON', async () => {

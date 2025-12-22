@@ -24,7 +24,7 @@ export class ScrapingClient implements TrackerClient {
     this.turndown = new TurndownService();
 
     // Remove unwanted elements to reduce token count
-    this.turndown.remove(['script', 'style', 'head', 'img', 'svg' as any]);
+    this.turndown.remove(['script', 'style', 'head', 'img', 'svg', 'nav', 'footer' as any]);
 
     // Async check, don't await in constructor but log result
     this.ollama.checkConnection().then(connected => {
@@ -59,17 +59,16 @@ export class ScrapingClient implements TrackerClient {
       const html = await response.text();
 
       // 1. Clean HTML to Markdown
-      const markdown = this.turndown.turndown(html);
+      const markdown = this.htmlToMarkdownWithKeywords(html);
 
       // 2. Inference
-      this.logger.debug('Sending markdown to Ollama...');
       const extracted = await this.ollama.extractStats(markdown);
       this.logger.debug(`Extracted data: ${JSON.stringify(extracted)}`);
 
       // 3. Parse fields
-      const uploaded = this.parseBytes(extracted.uploaded);
-      const downloaded = this.parseBytes(extracted.downloaded);
-      const ratio = parseFloat(extracted.ratio);
+      const uploaded = this.parseBytes(extracted.uploaded + extracted.uploaded_units);
+      const downloaded = this.parseBytes(extracted.downloaded + extracted.downloaded_units);
+      const ratio = extracted.ratio;
 
       // Scraping limits what we can easily get reliably without specialized prompts for every tracker
       // Default other stats to 0 as per requirements/impl
@@ -105,5 +104,45 @@ export class ScrapingClient implements TrackerClient {
             return 0;
         }
     }
+  }
+
+  private htmlToMarkdownWithKeywords(
+    html: string,
+    keywords: string[] = ['ratio', 'upload', 'download'],
+    padding: number = 300
+  ): string {
+    // 1. Get normalized text
+    const cleanText = this.turndown.turndown(html);
+    const lowerText = cleanText.toLowerCase();
+
+    let minIndex = Infinity;
+    let maxIndex = -1;
+    let foundAny = false;
+
+    // 2. Find the absolute bounds of all keywords
+    keywords.forEach((word) => {
+      const wordLower = word.toLowerCase();
+      let pos = lowerText.indexOf(wordLower);
+      
+      while (pos !== -1) {
+        foundAny = true;
+        if (pos < minIndex) minIndex = pos;
+        if (pos + word.length > maxIndex) maxIndex = pos + word.length;
+        
+        // Keep searching for other occurrences of the same word
+        pos = lowerText.indexOf(wordLower, pos + 1);
+      }
+    });
+
+    if (!foundAny) {
+      this.logger.info("Could not find keywords on page after transforming to markdown. Using original which may exhaust available tokens for LLM.");
+      return html;
+    }
+
+    // 3. Extract the single window with padding
+    const start = Math.max(0, minIndex - padding);
+    const end = Math.min(cleanText.length, maxIndex + padding);
+
+    return cleanText.slice(start, end);
   }
 }

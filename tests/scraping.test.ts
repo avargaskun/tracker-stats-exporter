@@ -76,9 +76,11 @@ describe('ScrapingClient Integration', () => {
   it('should scrape and extract stats correctly', async () => {
     // Mock the Ollama response
     mockExtractStats.mockResolvedValue({
-      uploaded: '3.03 TB',
-      downloaded: '575.67 GB',
-      ratio: '5.39'
+      uploaded: 3.03,
+      uploaded_units: 'TB',
+      downloaded: 575.67,
+      downloaded_units: 'GB',
+      ratio: 5.39
     });
 
     const stats = await client.getUserStats();
@@ -96,9 +98,11 @@ describe('ScrapingClient Integration', () => {
 
   it('should handle cookie authentication', async () => {
     mockExtractStats.mockResolvedValue({
-        uploaded: '0 B',
-        downloaded: '0 B',
-        ratio: '0'
+      uploaded: 3.03,
+      uploaded_units: 'TB',
+      downloaded: 575.67,
+      downloaded_units: 'GB',
+      ratio: 5.39
     });
 
     // If we change the cookie in the config, the server should return 403
