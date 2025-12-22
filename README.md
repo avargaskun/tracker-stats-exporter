@@ -97,7 +97,7 @@ docker run -d \
   -p 9100:9100 \
   -e TRACKER_MYSITE_URL=https://mysite.internal \
   -e TRACKER_MYSITE_API_KEY=myapikey \
-  ghcr.io/owner/tracker-stats-exporter:latest
+  ghcr.io/avargaskun/tracker-stats-exporter:latest
 ```
 
 ### Docker Compose
@@ -106,7 +106,7 @@ docker run -d \
 services:
   tracker-stats-exporter:
     container_name: tracker-stats-exporter
-    image: ghcr.io/owner/tracker-stats-exporter:latest
+    image: ghcr.io/avargaskun/tracker-stats-exporter:latest
     ports:
       - "9100:9100"
     environment:
