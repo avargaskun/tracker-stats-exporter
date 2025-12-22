@@ -56,12 +56,14 @@ describe('ScrapingClient Integration', () => {
 
     // Setup Mock Implementation
     const MockOllamaService = OllamaService as unknown as jest.Mock;
-    MockOllamaService.mockImplementation(() => {
-        return {
-            checkConnection: mockCheckConnection.mockResolvedValue(true),
-            extractStats: mockExtractStats
-        };
-    });
+    
+    const mockInstance = {
+      checkConnection: mockCheckConnection.mockResolvedValue(true),
+      extractStats: mockExtractStats
+    };
+
+    // Mock static getInstance
+    (MockOllamaService as any).getInstance = jest.fn().mockReturnValue(mockInstance);
 
     const config: TrackerConfig = {
       name: 'TestTracker',

@@ -16,14 +16,22 @@ const TrackerStatsSchema = z.object({
 export type TrackerStats = z.infer<typeof TrackerStatsSchema>;
 
 export class OllamaService {
+  private static instance: OllamaService;
   private client: Ollama;
   private model: string;
 
-  constructor() {
+  private constructor() {
     const config = getOllamaConfig();
     this.client = new Ollama({ host: config.host });
     this.model = config.model;
     logger.info(`Initialized OllamaService with host: ${config.host}, model: ${this.model}`);
+  }
+
+  public static getInstance(): OllamaService {
+    if (!OllamaService.instance) {
+      OllamaService.instance = new OllamaService();
+    }
+    return OllamaService.instance;
   }
 
   async checkConnection(): Promise<boolean> {
@@ -33,6 +41,41 @@ export class OllamaService {
     } catch (error) {
       logger.error(`Failed to connect to Ollama: ${error}`);
       return false;
+    }
+  }
+
+  async ensureModelAndConnection(): Promise<void> {
+    try {
+      // 1. Check connection and list models
+      const list = await this.client.list();
+      logger.info(`Ollama connection established. Found ${list.models.length} models.`);
+
+      // 2. Check if model exists
+      // exact match or match with implied tag if configured model has no tag?
+      // Usually users provide full name "gemma:2b".
+      const modelExists = list.models.some(m => m.name === this.model);
+
+      if (modelExists) {
+        logger.info(`Model '${this.model}' is available.`);
+        return;
+      }
+
+      // 3. Pull model if missing
+      logger.info(`Model '${this.model}' not found locally. Pulling... (this may take a while)`);
+
+      const response = await this.client.pull({ model: this.model, stream: true });
+
+      for await (const part of response) {
+         if (part.status) {
+             logger.info(`Pull status: ${part.status}`);
+         }
+      }
+
+      logger.info(`Model '${this.model}' pulled successfully.`);
+
+    } catch (error) {
+      logger.error(`Failed to ensure Ollama model availability: ${error}`);
+      throw error;
     }
   }
 

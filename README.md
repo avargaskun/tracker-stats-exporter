@@ -157,7 +157,12 @@ To retrieve the page HTML from the tracker, a session cookie is required for aut
 
 ### Setup Ollama
 
-The exporter needs access to a running instance of [Ollama](https://ollama.com/) in order to parse the tracker HTML using LLMs. You can run Ollama locally:
+The exporter needs access to a running instance of [Ollama](https://ollama.com/) in order to parse the tracker HTML using LLMs.
+
+> [!NOTE]
+> The exporter will automatically check if the configured `OLLAMA_MODEL` exists on startup and pull it if necessary. This may delay the initial startup.
+
+You can run Ollama locally:
 
 - Using Docker CLI:
 

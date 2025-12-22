@@ -11,7 +11,6 @@ import xbytes from 'xbytes';
 export class ScrapingClient implements TrackerClient {
   private config: TrackerConfig;
   private logger: Logger;
-  private ollama: OllamaService;
   private turndown: TurndownService;
 
   constructor(config: TrackerConfig) {
@@ -20,20 +19,10 @@ export class ScrapingClient implements TrackerClient {
     }
     this.config = config;
     this.logger = getLogger(`ScrapingClient:${config.name}`);
-    this.ollama = new OllamaService();
     this.turndown = new TurndownService();
 
     // Remove unwanted elements to reduce token count
     this.turndown.remove(['script', 'style', 'head', 'img', 'svg', 'nav', 'footer' as any]);
-
-    // Async check, don't await in constructor but log result
-    this.ollama.checkConnection().then(connected => {
-        if (!connected) {
-            this.logger.warn('Ollama connection check failed on startup.');
-        } else {
-            this.logger.debug('Ollama connection verified.');
-        }
-    });
   }
 
   async getUserStats(): Promise<UserStats> {
@@ -62,7 +51,8 @@ export class ScrapingClient implements TrackerClient {
       const markdown = this.htmlToMarkdownWithKeywords(html);
 
       // 2. Inference
-      const extracted = await this.ollama.extractStats(markdown);
+      const ollama = OllamaService.getInstance();
+      const extracted = await ollama.extractStats(markdown);
       this.logger.debug(`Extracted data: ${JSON.stringify(extracted)}`);
 
       // 3. Parse fields

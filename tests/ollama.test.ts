@@ -11,8 +11,11 @@ describe('OllamaService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Reset singleton instance for testing isolation
+    (OllamaService as any).instance = undefined;
+    
     // Instantiate service which creates the Ollama instance
-    service = new OllamaService();
+    service = OllamaService.getInstance();
 
     // Get the mocked instance
     mockOllamaInstance = (Ollama as unknown as jest.Mock).mock.instances[0];
