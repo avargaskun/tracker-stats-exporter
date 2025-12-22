@@ -1,9 +1,9 @@
-import { PrometheusExporter } from '../src/exporter';
-import { TrackerConfig } from '../src/config';
-import { createTrackerClient } from '../src/clients/tracker';
+import { PrometheusExporter } from './exporter';
+import { TrackerConfig } from './config';
+import { createTrackerClient } from './clients/tracker';
 
 // Mock createTrackerClient
-jest.mock('../src/clients/tracker');
+jest.mock('./clients/tracker');
 
 describe('PrometheusExporter', () => {
   const configs: TrackerConfig[] = [{

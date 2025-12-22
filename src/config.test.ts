@@ -1,4 +1,4 @@
-import { getExporterConfig } from '../src/config';
+import { getExporterConfig } from './config';
 
 describe('Exporter Configuration', () => {
   const originalEnv = process.env;

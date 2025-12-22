@@ -1,11 +1,11 @@
-import { ScrapingClient } from '../src/clients/scraping';
-import { OllamaService } from '../src/services/ollama';
-import { TrackerConfig } from '../src/config';
+import { ScrapingClient } from './scraping';
+import { OllamaService } from '../services/ollama';
+import { TrackerConfig } from '../config';
 import http from 'http';
 import { AddressInfo } from 'net';
 
 // Mock OllamaService class
-jest.mock('../src/services/ollama');
+jest.mock('../services/ollama');
 
 // Define mock functions outside
 const mockExtractStats = jest.fn();

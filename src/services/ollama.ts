@@ -34,16 +34,6 @@ export class OllamaService {
     return OllamaService.instance;
   }
 
-  async checkConnection(): Promise<boolean> {
-    try {
-      await this.client.list();
-      return true;
-    } catch (error) {
-      logger.error(`Failed to connect to Ollama: ${error}`);
-      return false;
-    }
-  }
-
   async ensureModelAndConnection(): Promise<void> {
     try {
       // 1. Check connection and list models

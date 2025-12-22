@@ -1,5 +1,5 @@
-import { Unit3DClient } from '../src/clients/unit3d';
-import { TrackerConfig } from '../src/config';
+import { Unit3DClient } from './unit3d';
+import { TrackerConfig } from '../config';
 import { fetch } from 'undici';
 
 // Mock undici fetch
