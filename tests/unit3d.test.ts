@@ -1,4 +1,4 @@
-import { Unit3DClient } from '../src/tracker';
+import { Unit3DClient } from '../src/clients/unit3d';
 import { TrackerConfig } from '../src/config';
 import { fetch } from 'undici';
 

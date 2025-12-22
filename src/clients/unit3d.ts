@@ -1,24 +1,9 @@
-import { TrackerConfig, getProxyAgent } from './config';
+import { TrackerConfig, getProxyAgent } from '../config';
 import parser from 'filesize-parser';
-import { getLogger } from './logger';
+import { getLogger } from '../logger';
 import { Logger } from 'winston';
 import { fetch } from 'undici';
-import { ScrapingClient } from './clients/scraping';
-
-export interface UserStats {
-  uploaded: number;
-  downloaded: number;
-  ratio: number;
-  seedbonus: number;
-  seeding: number;
-  leeching: number;
-  buffer: number;
-  hit_and_runs: number;
-}
-
-export interface TrackerClient {
-  getUserStats(): Promise<UserStats>;
-}
+import { TrackerClient, UserStats } from './tracker';
 
 export class Unit3DClient implements TrackerClient {
   private config: TrackerConfig;
@@ -102,11 +87,4 @@ export class Unit3DClient implements TrackerClient {
     }
     return 0;
   }
-}
-
-export function createTrackerClient(config: TrackerConfig): TrackerClient {
-  if (config.type === 'SCRAPING') {
-    return new ScrapingClient(config);
-  }
-  return new Unit3DClient(config);
 }

@@ -1,4 +1,4 @@
-import { Unit3DClient } from '../src/tracker';
+import { Unit3DClient } from '../src/clients/unit3d';
 import { TrackerConfig, resetProxyAgent } from '../src/config';
 import * as http from 'http';
 import { AddressInfo } from 'net';

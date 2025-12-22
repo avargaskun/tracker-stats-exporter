@@ -1,4 +1,4 @@
-import { TrackerClient, UserStats } from '../tracker';
+import { TrackerClient, UserStats } from './tracker';
 import { TrackerConfig, getProxyAgent } from '../config';
 import { OllamaService } from '../services/ollama';
 import { getLogger } from '../logger';

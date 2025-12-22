@@ -1,6 +1,6 @@
 import * as http from 'http';
 import { Registry, Gauge } from 'prom-client';
-import { createTrackerClient, TrackerClient } from './tracker';
+import { createTrackerClient, TrackerClient } from './clients/tracker';
 import { TrackerConfig, getExporterConfig } from './config';
 import { getLogger } from './logger';
 import { Logger } from 'winston';
