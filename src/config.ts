@@ -1,6 +1,7 @@
 import ms from 'ms';
 import { getLogger } from './logger';
 import { ProxyAgent } from 'undici';
+import fs from 'fs';
 
 const logger = getLogger('Config');
 
@@ -34,6 +35,9 @@ export function parseConfig(): TrackerConfig[] {
     } else if (key.endsWith('_TYPE')) {
         option = 'type';
         name = key.slice(8, -5);
+    } else if (key.endsWith('_COOKIE_FILE')) {
+        option = 'cookieFile';
+        name = key.slice(8, -12);
     } else if (key.endsWith('_COOKIE')) {
         option = 'cookie';
         name = key.slice(8, -7);
@@ -53,6 +57,16 @@ export function parseConfig(): TrackerConfig[] {
   const validTrackers: TrackerConfig[] = [];
 
   for (const [name, config] of Object.entries(trackers)) {
+    // Resolve cookie file if present
+    const cookieFile = (config as any).cookieFile;
+    if (cookieFile) {
+        try {
+            config.cookie = fs.readFileSync(cookieFile, 'utf8').trim();
+        } catch (e) {
+            logger.error(`Failed to read cookie file for tracker ${name} at ${cookieFile}: ${e}`);
+        }
+    }
+
     // URL is always required to identify the tracker and connectivity
     if (config.url) {
       let type = config.type;

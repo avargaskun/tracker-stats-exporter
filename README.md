@@ -44,12 +44,13 @@ Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{O
 > [!NOTE]
 > When extracting stats using scraping rather than API, you should set this variable to the URL of your profile page.
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `TRACKER_{NAME}_TYPE`    | Tracker type (`UNIT3D` or `SCRAPING`)        | `UNIT3D` |
-| `TRACKER_{NAME}_URL`     | The base URL of the tracker                  | _(empty)_ |
-| `TRACKER_{NAME}_API_KEY` | Your API token (Required for UNIT3D)         | _(empty)_ |
-| `TRACKER_{NAME}_COOKIE`  | Your session cookie (Required for SCRAPING)  | _(empty)_ |
+| Variable                      | Description                                             | Default     |
+|-------------------------------|---------------------------------------------------------|-------------|
+| `TRACKER_{NAME}_TYPE`         | Tracker type (`UNIT3D` or `SCRAPING`)                   | `UNIT3D`    |
+| `TRACKER_{NAME}_URL`          | The base URL of the tracker                             | _(empty)_   |
+| `TRACKER_{NAME}_API_KEY`      | Your API token (Required for UNIT3D)                    | _(empty)_   |
+| `TRACKER_{NAME}_COOKIE`       | Your session cookie (Required for SCRAPING)             | _(empty)_   |
+| `TRACKER_{NAME}_COOKIE_FILE`  | Alternatively, specify the session cookie using a file  | _(empty)_   |
 
 ### Global Proxy Configuration
 
