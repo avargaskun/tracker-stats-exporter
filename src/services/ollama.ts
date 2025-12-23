@@ -2,6 +2,7 @@ import { Ollama } from 'ollama';
 import { getOllamaConfig } from '../config';
 import { getLogger } from '../logger';
 import { z } from 'zod';
+import { extract, LLMProvider, ContentFormat } from '@lightfeed/extractor';
 
 const logger = getLogger('OllamaService');
 
@@ -70,74 +71,44 @@ export class OllamaService {
   }
 
   async extractStats(markdown: string): Promise<TrackerStats> {
-    const summary = await this.summarize(markdown);
-    return await this.extract(summary);
-  }
-
-  private async summarize(markdown: string): Promise<string> {
-    const prompt = `You are a data extractor. The following is the markdown version of a webpage showing the user profile for a bittorrent tracker. Your task is to extract the following information:
-
-- Amount of data uploaded by the user
-- Amount of data downloaded by the user
-- Ratio of data sharing
-
-Return the information in bullet points. Do not return any other information than what was mentioned earlier.
-
-Input:
-
-${markdown}`;
+    const config = getOllamaConfig();
+    const originalBaseUrl = process.env.OPENAI_BASE_URL;
+    
+    // Set Ollama as OpenAI compatible endpoint
+    // Ensure we have the /v1 suffix for OpenAI SDK compatibility
+    const baseUrl = config.host.endsWith('/v1') ? config.host : `${config.host}/v1`;
+    process.env.OPENAI_BASE_URL = baseUrl;
 
     try {
-      logger.debug(`Sending prompt to model: ${prompt}`);
+      logger.debug(`Starting extraction with model ${this.model} at ${baseUrl}`);
+      
+      const result = await extract({
+        content: markdown,
+        format: ContentFormat.MARKDOWN,
+        schema: TrackerStatsSchema,
+        provider: LLMProvider.OPENAI,
+        modelName: this.model,
+        openaiApiKey: 'ollama', // Required but ignored by Ollama
+        prompt: "Extract the user statistics (upload, download, ratio) from the provided tracker profile markdown content.",
+      } as any);
 
-      const response = await this.client.generate({
-        model: this.model,
-        prompt: prompt,
-        stream: false
-      });
+      logger.debug(`Result from extract: ${JSON.stringify(result)}`);
 
-      logger.debug(`Response from service: ${response.response}`);
+      if (!result.data) {
+         throw new Error("Extraction returned no data");
+      }
 
-      return response.response;
+      return result.data;
+
     } catch (error) {
-      logger.error(`Error during inference or parsing: ${error}`);
+      logger.error(`Error during extraction: ${error}`);
       throw error;
-    }
-  }
-
-  private async extract(summary: string): Promise<TrackerStats> {
-    const prompt = `You are a data extractor. You generate VALID JSON as output. From the following input, your task is to generate a JSON object with the following attributes:
-
-- upload_size (number)
-- upload_unit (string, like "GB", "TB", etc.)
-- download_size (number)
-- download_unit (string, like "GB", "TB", etc.)
-- ratio
-
-The JSON object must ONLY contain one or more of the attributes above, no other attribute is allowed.
-
-Input:
-
-${summary}`
-
-    try {
-      logger.debug(`Sending prompt to model: ${prompt}`);
-
-      const response = await this.client.generate({
-        model: this.model,
-        prompt: prompt,
-        stream: false,
-        format: z.toJSONSchema(TrackerStatsSchema)
-      });
-
-      logger.debug(`Response from service: ${response.response}`);
-
-      const json = JSON.parse(response.response);
-      const result = TrackerStatsSchema.parse(json);
-      return result;
-    } catch (error) {
-      logger.error(`Error during inference or parsing: ${error}`);
-      throw error;
+    } finally {
+        if (originalBaseUrl) {
+            process.env.OPENAI_BASE_URL = originalBaseUrl;
+        } else {
+            delete process.env.OPENAI_BASE_URL;
+        }
     }
   }
 }

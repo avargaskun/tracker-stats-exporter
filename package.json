@@ -32,15 +32,17 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@lightfeed/extractor": "^0.2.1",
     "filesize-parser": "^1.5.1",
     "ms": "^2.1.3",
     "ollama": "^0.6.3",
+    "openai": "^6.15.0",
     "prom-client": "^15.1.0",
     "turndown": "^7.2.2",
     "undici": "^7.16.0",
     "winston": "^3.19.0",
     "xbytes": "^1.9.1",
-    "zod": "^4.2.1"
+    "zod": "^3.24.3"
   },
   "jest": {
     "preset": "ts-jest",
