@@ -32,6 +32,9 @@ export function parseConfig(): TrackerConfig[] {
         } else if (key.endsWith('_API_KEY')) {
             option = 'apiKey';
             name = key.slice(8, -8);
+        } else if (key.endsWith('_API_KEY_FILE')) {
+            option = 'apiKeyFile';
+            name = key.slice(8, -13);
         } else if (key.endsWith('_TYPE')) {
             option = 'type';
             name = key.slice(8, -5);
@@ -57,13 +60,23 @@ export function parseConfig(): TrackerConfig[] {
     const validTrackers: TrackerConfig[] = [];
 
     for (const [name, config] of Object.entries(trackers)) {
-    // Resolve cookie file if present
+        // Resolve cookie file if present
         const cookieFile = (config as any).cookieFile;
         if (cookieFile) {
             try {
                 config.cookie = fs.readFileSync(cookieFile, 'utf8').trim();
             } catch (e) {
                 logger.error(`Failed to read cookie file for tracker ${name} at ${cookieFile}: ${e}`);
+            }
+        }
+
+        // Resolve api key file if present
+        const apiKeyFile = (config as any).apiKeyFile;
+        if (apiKeyFile) {
+            try {
+                config.apiKey = fs.readFileSync(apiKeyFile, 'utf8').trim();
+            } catch (e) {
+                logger.error(`Failed to read api key file for tracker ${name} at ${apiKeyFile}: ${e}`);
             }
         }
 
