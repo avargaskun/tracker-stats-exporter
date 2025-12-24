@@ -1,8 +1,10 @@
 # Tracker Stats Exporter
 
-A Prometheus exporter for private BitTorrent trackers running the [Unit3D](https://github.com/HDInnovations/UNIT3D-Community-Edition) engine (e.g., OnlyEncodes, SeedPool, etc.).
+A Prometheus exporter that retrieves user metrics (Upload, Download, Buffer, Ratio, Bonus Points, Seeding, Leeching, Hit & Runs) from one or more trackers and exposes them on a standard Prometheus `/metrics` endpoint.
 
-This application scrapes user metrics (Upload, Download, Buffer, Ratio, Bonus Points, Seeding, Leeching, Hit & Runs) from multiple configured trackers and exposes them on a standard Prometheus `/metrics` endpoint.
+The exporter has native support for private trackers running the [Unit3D](https://github.com/HDInnovations/UNIT3D-Community-Edition) engine (e.g., OnlyEncodes, SeedPool, etc.).
+
+For trackers that do not provide an API, you can provide a session cookie and the exporter will scrape the stats from the profile pages using heuristics.
 
 ## Features
 
@@ -29,24 +31,24 @@ Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{O
 | `STATS_TTL` | Cache duration for stats (min 5m) | `15m` |
 | `LOG_LEVEL` | Logging level (DEBUG, INFO, WARN, ERROR) | `INFO` |
 
-### Required Environment Variables per Tracker
+### Tracker Configuration
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `TRACKER_{NAME}_URL` | The base URL of the tracker | `https://seedpool.org` |
+> [!NOTE]
+> When extracting stats using scraping rather than API, you should set this variable to the URL of your profile page.
 
-### Optional Environment Variables per Tracker
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `TRACKER_{NAME}_API_KEY` | Your API token | _(empty)_ |
-| `TRACKER_{NAME}_TYPE` | The type of tracker (`UNIT3D`) | Auto-detected or `UNIT3D` |
-
-**Note:** Currently only `UNIT3D` tracker type is supported. Other types will be ignored if specified or auto-detected.
+| Variable                      | Description                                             | Default     |
+|-------------------------------|---------------------------------------------------------|-------------|
+| `TRACKER_{NAME}_TYPE`         | Tracker type (`UNIT3D` or `SCRAPING`)                   | `UNIT3D`    |
+| `TRACKER_{NAME}_URL`          | The base URL of the tracker                             | _(empty)_   |
+| `TRACKER_{NAME}_API_KEY`      | Your API token (Required for UNIT3D)                    | _(empty)_   |
+| `TRACKER_{NAME}_COOKIE`       | Your session cookie (Required for SCRAPING)             | _(empty)_   |
+| `TRACKER_{NAME}_COOKIE_FILE`  | Alternatively, specify the session cookie using a file  | _(empty)_   |
 
 ### Global Proxy Configuration
 
-You can configure a global proxy that will be used for all tracker requests. This is useful if you already have a container running behind a VPN with Privoxy enabled (e.g., https://hotio.dev/containers/qbittorrent/).
+You can configure a global proxy that will be used for all tracker requests. This is useful if you already have a container running behind a VPN with Privoxy enabled.
+
+**Note**: The connection to the Ollama instance is direct and does **not** use this proxy.
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -56,12 +58,13 @@ You can configure a global proxy that will be used for all tracker requests. Thi
 
 ## Supported Trackers
 
-At this point, only trackers based on the UNIT3D platform are supported. The following trackers are known to work:
-
-- OnlyEncodes+ (https://onlyencodes.cc)
-- SeedPool (https://seedpool.org)
-- DarkPeers (https://darkpeers.org)
-- ULCX (https://upload.cx)
+- **UNIT3D**: Fully supported via API (e.g., OnlyEncodes, SeedPool). The following trackers are known to work in this mode:
+  - OnlyEncodes+ (https://onlyencodes.cc)
+  - SeedPool (https://seedpool.org)
+  - DarkPeers (https://darkpeers.org)
+  - ULCX (https://upload.cx)
+- **Generic Scraping**: Any tracker with a visible stats page can be supported using the `SCRAPING` mode. The following trackers are known to work in this mode:
+  - TorrentLeech
 
 ## Metrics
 
@@ -95,8 +98,8 @@ The image is available on GHCR (GitHub Container Registry).
 docker run -d \
   --name tracker-stats-exporter \
   -p 9100:9100 \
-  -e TRACKER_MYSITE_URL=https://mysite.internal \
-  -e TRACKER_MYSITE_API_KEY=myapikey \
+  -e TRACKER_SEEDPOOL_URL=https://seedpool.org \
+  -e TRACKER_SEEDPOOL_API_KEY=abcdef123456 \
   ghcr.io/avargaskun/tracker-stats-exporter:latest
 ```
 
@@ -130,6 +133,22 @@ scrape_configs:
 ```
 
 **Note:** The application caches data for a configurable duration (default 15 minutes, min 5 minutes). Scrape intervals shorter than the configured TTL will return cached data.
+
+## Scraping Considerations
+
+To use the `SCRAPING` mode you need to take a few additional configuration steps.
+
+### Manual Cookie Retrieval
+
+To retrieve the page HTML from the tracker, a session cookie is required for authentication. You will need to log into the tracker from a web browser and retrieve the session cookie:
+
+1. Log in to your tracker in a web browser (Chrome/Firefox).
+2. Open Developer Tools (F12) -> Network tab.
+3. Refresh the page.
+4. Click on the first request (usually the page name).
+5. Under Request Headers, find the `cookie:` field.
+6. Copy the entire value (e.g., `uid=123; pass=abc; ...`) and save it into a file.
+7. Set the environment variable `TRACKER_..._COOKIE_FILE` to the file containing the cookie value.
 
 ## Development
 
