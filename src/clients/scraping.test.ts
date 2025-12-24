@@ -1,15 +1,7 @@
 import { ScrapingClient } from './scraping';
-import { OllamaService } from '../services/ollama';
 import { TrackerConfig } from '../config';
 import http from 'http';
 import { AddressInfo } from 'net';
-
-// Mock OllamaService class
-jest.mock('../services/ollama');
-
-// Define mock functions outside
-const mockExtractStats = jest.fn();
-const mockCheckConnection = jest.fn();
 
 describe('ScrapingClient Integration', () => {
   let server: http.Server;
@@ -24,6 +16,10 @@ describe('ScrapingClient Integration', () => {
       <span>Uploaded: 3.03 TB</span>
       <span>Downloaded: 575.67 GB</span>
       <span>Ratio: 5.39</span>
+      <span>Seeding: 12</span>
+      <span>Leeching: 0</span>
+      <span>Hit and Run: 0</span>
+      <span>Bonus Points: 1,234.56</span>
     </div>
   </body>
   </html>
@@ -52,19 +48,6 @@ describe('ScrapingClient Integration', () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
-
-    // Setup Mock Implementation
-    const MockOllamaService = OllamaService as unknown as jest.Mock;
-    
-    const mockInstance = {
-      checkConnection: mockCheckConnection.mockResolvedValue(true),
-      extractStats: mockExtractStats
-    };
-
-    // Mock static getInstance
-    (MockOllamaService as any).getInstance = jest.fn().mockReturnValue(mockInstance);
-
     const config: TrackerConfig = {
       name: 'TestTracker',
       url: `http://localhost:${port}/profile`,
@@ -76,37 +59,27 @@ describe('ScrapingClient Integration', () => {
   });
 
   it('should scrape and extract stats correctly', async () => {
-    // Mock the Ollama response
-    mockExtractStats.mockResolvedValue({
-      uploaded: 3.03,
-      uploaded_units: 'TB',
-      downloaded: 575.67,
-      downloaded_units: 'GB',
-      ratio: 5.39
-    });
-
     const stats = await client.getUserStats();
 
-    // Verify request went to Ollama
-    expect(mockExtractStats).toHaveBeenCalled();
-    const calledWithMarkdown = mockExtractStats.mock.calls[0][0];
-    expect(calledWithMarkdown).toContain('Uploaded: 3.03 TB');
+    // 3.03 TB = 3.03 * 1024^4 = 3,331,525,833,523
+    // 575.67 GB = 575.67 * 1024^3 = 618,138,574,356
+    
+    // We expect approximate values due to float math, or we can check parsing logic from extractor
+    // extractor.ts uses 1024 based multipliers.
+    
+    const expectedUploaded = Math.floor(3.03 * (1024 ** 4));
+    const expectedDownloaded = Math.floor(575.67 * (1024 ** 3));
 
-    // Verify byte conversion
-    expect(stats.uploaded).toBeGreaterThan(3000000000000);
-    expect(stats.downloaded).toBeGreaterThan(500000000000);
+    expect(stats.uploaded).toBe(expectedUploaded);
+    expect(stats.downloaded).toBe(expectedDownloaded);
     expect(stats.ratio).toBe(5.39);
+    expect(stats.seeding).toBe(12);
+    expect(stats.leeching).toBe(0);
+    expect(stats.hitAndRuns).toBe(0);
+    expect(stats.bonus).toBe(1234.56);
   });
 
   it('should handle cookie authentication', async () => {
-    mockExtractStats.mockResolvedValue({
-      uploaded: 3.03,
-      uploaded_units: 'TB',
-      downloaded: 575.67,
-      downloaded_units: 'GB',
-      ratio: 5.39
-    });
-
     // If we change the cookie in the config, the server should return 403
     const badConfig: TrackerConfig = {
         name: 'TestTracker',
@@ -116,6 +89,6 @@ describe('ScrapingClient Integration', () => {
     };
     const badClient = new ScrapingClient(badConfig);
 
-    await expect(badClient.getUserStats()).rejects.toThrow('Failed to fetch page');
+    await expect(badClient.getUserStats()).rejects.toThrow('Failed to fetch page from TestTracker: 403 Forbidden');
   });
 });

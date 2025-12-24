@@ -62,11 +62,11 @@ export class Unit3DClient implements TrackerClient {
         uploaded,
         downloaded,
         ratio,
-        seedbonus,
+        bonus: seedbonus,
         seeding,
         leeching,
         buffer,
-        hit_and_runs
+        hitAndRuns: hit_and_runs
       };
 
     } catch (error) {

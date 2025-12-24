@@ -110,19 +110,21 @@ export class PrometheusExporter {
 
     this.logger.debug('Cache expired or empty. Fetching new metrics...');
 
+    this.registry.resetMetrics();
+
     await Promise.all(this.clients.map(async (client, index) => {
       const trackerName = this.configs[index].name;
       try {
         const stats = await client.getUserStats();
 
-        this.uploadGauge.set({ tracker: trackerName }, stats.uploaded);
-        this.downloadGauge.set({ tracker: trackerName }, stats.downloaded);
-        this.bufferGauge.set({ tracker: trackerName }, stats.buffer);
-        this.ratioGauge.set({ tracker: trackerName }, stats.ratio);
-        this.bonusGauge.set({ tracker: trackerName }, stats.seedbonus);
-        this.seedingGauge.set({ tracker: trackerName }, stats.seeding);
-        this.leechingGauge.set({ tracker: trackerName }, stats.leeching);
-        this.hnrGauge.set({ tracker: trackerName }, stats.hit_and_runs);
+        if (stats.uploaded !== undefined) this.uploadGauge.set({ tracker: trackerName }, stats.uploaded);
+        if (stats.downloaded !== undefined) this.downloadGauge.set({ tracker: trackerName }, stats.downloaded);
+        if (stats.buffer !== undefined) this.bufferGauge.set({ tracker: trackerName }, stats.buffer);
+        if (stats.ratio !== undefined) this.ratioGauge.set({ tracker: trackerName }, stats.ratio);
+        if (stats.bonus !== undefined) this.bonusGauge.set({ tracker: trackerName }, stats.bonus);
+        if (stats.seeding !== undefined) this.seedingGauge.set({ tracker: trackerName }, stats.seeding);
+        if (stats.leeching !== undefined) this.leechingGauge.set({ tracker: trackerName }, stats.leeching);
+        if (stats.hitAndRuns !== undefined) this.hnrGauge.set({ tracker: trackerName }, stats.hitAndRuns);
         this.upStatusGauge.set({ tracker: trackerName }, 1);
 
         this.logger.debug(`Successfully updated metrics for ${trackerName}`);
