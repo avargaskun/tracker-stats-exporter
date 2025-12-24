@@ -88,8 +88,10 @@ function getCount(html: string, context: "seeding" | "leeching" | "hnr"): number
         // 4. Generic/AvistaZ/Unit3D: "Leeching: 0", "Total Leeching... 0"
         patterns.push(/Leeching\s*(?:[:><"']|&nbsp;)[\s\S]{0,200}?(\d+)/i);
     } else if (context === "hnr") {
-        // 1. "Hit and Run" or "Hit & Run" or "H&R" or "HnR" -> "0"
-        patterns.push(/(?:Hit\s+(?:and|&)\s+Run|H&R|HnR)[\s\S]{0,200}?(\d+)/i);
+        // 1. "Hit and Run" or "Hit & Run" (Prioritize explicit labels to avoid matching URL params like 'hnr=1')
+        patterns.push(/Hit\s+(?:and|&)\s+Run[\s\S]{0,200}?(\d+)/i);
+        // 2. "H&R" or "HnR"
+        patterns.push(/(?:H&R|HnR)[\s\S]{0,200}?(\d+)/i);
     }
 
     return extractMetric(html, patterns, (match) => parseInt(match[1], 10));
