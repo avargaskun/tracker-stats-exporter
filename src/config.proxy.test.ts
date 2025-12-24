@@ -49,14 +49,14 @@ describe('Proxy Behavior', () => {
                 }));
             });
 
-            proxyServer.on('connect', (req, socket, head) => {
+            proxyServer.on('connect', (req, socket, _head) => {
                 proxyHit = true;
                 socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 
                 // For this test, we simulate the "Tunnel" by responding directly on the socket
                 // as if we were the target server.
                 // We wait for the client to send the request through the tunnel.
-                socket.once('data', (chunk) => {
+                socket.once('data', (_chunk) => {
                     // console.log('Proxy tunnel received data:', chunk.toString());
                     socket.write('HTTP/1.1 200 OK\r\n');
                     socket.write('Content-Type: application/json\r\n\r\n');
