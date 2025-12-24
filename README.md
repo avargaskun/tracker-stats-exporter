@@ -41,6 +41,7 @@ Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{O
 | `TRACKER_{NAME}_TYPE`         | Tracker type (`UNIT3D` or `SCRAPING`)                   | `UNIT3D`    |
 | `TRACKER_{NAME}_URL`          | The base URL of the tracker                             | _(empty)_   |
 | `TRACKER_{NAME}_API_KEY`      | Your API token (Required for UNIT3D)                    | _(empty)_   |
+| `TRACKER_{NAME}_API_KEY_FILE` | Alternatively, specify the API token using a file       | _(empty)_   |
 | `TRACKER_{NAME}_COOKIE`       | Your session cookie (Required for SCRAPING)             | _(empty)_   |
 | `TRACKER_{NAME}_COOKIE_FILE`  | Alternatively, specify the session cookie using a file  | _(empty)_   |
 
@@ -98,8 +99,12 @@ The image is available on GHCR (GitHub Container Registry).
 docker run -d \
   --name tracker-stats-exporter \
   -p 9100:9100 \
+  -v /path/to/cookie/files:/data \
+  -e STATS_TTL=1h \
   -e TRACKER_SEEDPOOL_URL=https://seedpool.org \
   -e TRACKER_SEEDPOOL_API_KEY=abcdef123456 \
+  -e TRACKER_ULCX_URL=https://upload.cx \
+  -e TRACKER_ULCX_COOKIE_FILE=/data/ulcx.cookie \
   ghcr.io/avargaskun/tracker-stats-exporter:latest
 ```
 
@@ -112,12 +117,14 @@ services:
     image: ghcr.io/avargaskun/tracker-stats-exporter:latest
     ports:
       - "9100:9100"
+    volumes:
+      - /path/to/cookie/files:/data
     environment:
       - STATS_TTL=1h # Recommended to avoid getting banned for excessive traffic
       - TRACKER_SEEDPOOL_URL=https://seedpool.org
       - TRACKER_SEEDPOOL_API_KEY=abcdef123456
-      - TRACKER_ONLYENCODES_URL=https://onlyencodes.cc
-      - TRACKER_ONLYENCODES_API_KEY=98765zyxw
+      - TRACKER_ULCX_URL=https://upload.cx
+      - TRACKER_ULCX_COOKIE_FILE=/data/ulcx.cookie
     restart: unless-stopped
 ```
 
