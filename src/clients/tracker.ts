@@ -3,14 +3,14 @@ import { ScrapingClient } from './scraping';
 import { Unit3DClient } from './unit3d';
 
 export interface UserStats {
-  uploaded: number;
-  downloaded: number;
-  ratio: number;
-  seedbonus: number;
-  seeding: number;
-  leeching: number;
-  buffer: number;
-  hit_and_runs: number;
+  uploaded: number | undefined;
+  downloaded: number | undefined;
+  ratio: number | undefined;
+  bonus: number | undefined;
+  seeding: number | undefined;
+  leeching: number | undefined;
+  buffer: number | undefined;
+  hitAndRuns: number | undefined;
 }
 
 export interface TrackerClient {

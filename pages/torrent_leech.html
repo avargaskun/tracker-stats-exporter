@@ -1,0 +1,604 @@
+<!--
+Upload: 3.15 TB
+Download: 575.67 GB
+Ratio: 5.603
+Buffer: 2.59 TB
+Bonus: 33912.57
+Seeding: 289
+Leeching: 1
+HnR: 13
+-->
+<!DOCTYPE html>
+<html lang="en" class="html-lights-off">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer"/>
+    <title>TorrentLeech.org</title>    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    
+    <link rel="stylesheet" href="/common.5d7ee9c81b4ee2ece273796adadad224.css">
+    
+    <link rel="stylesheet" href="/main.2cec7de98c3366206c0b2612e40f8e7a.css">
+
+    	
+	<style>
+	.link{
+		border-bottom:1px dashed;
+		cursor:pointer;
+	}
+	
+	.div-menu-item{ 
+		display:block;
+	}
+
+    @media screen and (min-width: 600px)  {
+        .div-menu-item{ 
+			display: inline;
+		}
+    }
+	
+	.tooltip {
+	  position: relative !important;
+      font-size: 14px !important;
+	  width: 22px;
+	}
+
+	.tooltip .tooltip-contents {
+	  display: none;
+      font-size: 12px !important;
+	}
+
+	.tooltip .tooltip-title {
+	  cursor: pointer;
+	}
+	</style>
+	
+	<script type="text/javascript">
+    //<![CDATA[
+        function populateEditSeedbox(seedboxData)
+    {
+    $('[id^=editSeedbox_]').val('');
+    var data = decodeURIComponent(seedboxData);
+    data = JSON.parse(data);
+    $.each(data, function(key, val){
+    var cleaned = val.toString().replace(/\+/g, ' ');
+    $('#editSeedbox_'+ key).val(cleaned);
+    });
+    }
+
+    function populateDeleteSeedbox(seedboxData)
+    {
+    $('[id^=deleteSeedbox_]').val('');
+    var data = decodeURIComponent(seedboxData);
+    data = JSON.parse(data);
+    $.each(data, function(key, val){
+    var cleaned = val.toString().replace(/\+/g, ' ');
+    $('#deleteSeedbox_'+ key).val(cleaned);
+    });
+    }
+
+    function populateMarketplacePurchase(itemData)
+    {
+    $('[id^=marketPurchase_]').val('');
+    var data = decodeURIComponent(itemData);
+    data = JSON.parse(data);
+    $.each(data, function(key, val){
+    var cleaned = val.toString().replace(/\+/g, ' ');
+    if ($('#marketPurchase_'+ key).is('input'))
+    {
+    $('#marketPurchase_'+ key).val(cleaned);
+    }
+    else
+    {
+    $('#marketPurchase_'+ key).html(cleaned);
+    }
+    });
+    }
+
+    function populateUpdateCategory(categoryData)
+    {
+    $('[id^=category_]').val('');
+    var data = decodeURIComponent(categoryData);
+    data = JSON.parse(data);
+    $.each(data, function(key, val){
+
+    var cleaned = val.toString().replace(/\+/g, ' ');
+    if ($('#category_'+ key).attr('type') == 'checkbox')
+    {
+    $('#category_'+ key).prop('checked', ((cleaned) ? true : false));
+    }
+    else
+    {
+    $('#category_'+ key).val(cleaned);
+    }
+    });
+    }
+
+    function populateUpdateGroup(groupData)
+    {
+    $('[id^=group_]').val('');
+    var data = decodeURIComponent(groupData);
+    data = JSON.parse(data);
+    $.each(data, function(key, val){
+
+    var cleaned = val.toString().replace(/\+/g, ' ');
+    if ($('#group_'+ key).attr('type') == 'checkbox')
+    {
+    $('#group_'+ key).prop('checked', ((cleaned) ? true : false));
+    }
+    else
+    {
+    $('#group_'+ key).val(cleaned);
+    }
+    });
+    }
+
+    function populateUpdateReward(rewardData)
+    {
+    $('[id^=reward_]').val('');
+    var data = decodeURIComponent(rewardData);
+    data = JSON.parse(data);
+    $.each(data, function(key, val){
+
+    var cleaned = val.toString().replace(/\+/g, ' ');
+    if ($('#reward_'+ key).attr('type') == 'checkbox')
+    {
+    $('#reward_'+ key).prop('checked', ((cleaned) ? true : false));
+    }
+    else
+    {
+    $('#reward_'+ key).val(cleaned);
+    }
+    });
+    }
+
+        //]]>
+</script></head>
+
+<body class="tl-lights-off">
+	<!-- PrivateVPN LINK -->
+                <div class="vpn-msg-placeholder">
+                <div class="PVPNIPAddress" data-pvpnvalue="127.0.0.1"></div>
+                <div class="PVPNCountry" data-pvpnvalue="CA"></div>
+            </div>
+        
+<!-- START NAVBAR -->
+<div class="navbar navbar-default tl loggedin">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/"></a>
+        </div>
+
+        <form class="navbar-form navbar-left hidden-sm hidden-xs">
+            <div class="nav-tl-search-wrapper">
+                <input required type="text" class="nav-tl-search search-autocomplete-input" placeholder="Search" />
+                <button type="button" class="nav-tl-search-btn">
+                    <i class="fa fa-search"></i>
+                </button>
+            </div>
+        </form>
+
+        <form class="navbar-form no-margin visible-xs-block">
+            <div class="nav-tl-search-wrapper full">
+                <input required type="text" class="nav-tl-search search-autocomplete-input full" placeholder="Search" />
+            </div>
+        </form>
+
+        <!-- MENU -->
+        <div class="navbar-right navbar-collapse collapse navbar-responsive-collapse">
+            <ul class="nav navbar-nav navbar-right navbar-menu">
+                <!-- CTA -->
+                <li><a href="/user/donate" class="vip">VIP</a></li>
+                <li><a href="/torrents/top/index" class="">TOP</a></li>
+                <li><a href="/torrents/browse/index" class="text-uppercase">Browse</a></li>
+                <li class="dropdown text-uppercase">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Media <span class="hidden-sm">Center</span><span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="/torrents/movies">Movies</a></li>
+                        <li><a href="/torrents/series/popcorn">Series</a></li>
+                        <li><a href="/torrents/games">Games</a></li>
+                        <li><a href="/torrents/tvschedule" class="text-uppercase">tv schedule</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown text-uppercase">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Requests<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="/user/requests">New Requests</a></li>
+                        <li><a href="/user/reseeds">Reseeds</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="/content/articles" class="text-uppercase">
+                        news
+                                            </a>
+                </li>
+                <li class='hidden-sm'>
+                    <a href="/" class="dropdown-toggle" data-toggle="dropdown">
+                        <span class="text-uppercase">help</span>
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu text-uppercase">
+                        <li><a href="/chat">IRC</a></li>
+                        <li><a href="/staff/list#Uploader">Staff</a></li>
+                        <li><a href="https://wiki.torrentleech.org">Wiki</a></li>
+                    </ul>
+                </li>
+                <li class="hidden-sm"><a href="https://forums.torrentleech.org/" class="text-uppercase">Forum</a></li>
+                <li class="dropdown">
+                    <a href="/" class="dropdown-toggle" data-toggle="dropdown">
+                        <span class="text-uppercase">More</span>
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu text-uppercase">
+                        <li class="visible-sm"><a href="https://forums.torrentleech.org/">Forum</a></li>
+                        <li class="visible-sm"><a href="/chat">IRC</a></li>
+                        <li class="visible-sm"><a href="/staff/list#Uploader">Staff</a></li>
+						<li class="visible-sm"><a href="http://wiki.torrentleech.org">Wiki</a></li>
+                        <li><a href="http://classic.torrentleech.org">Classic TL</a></li>
+                        <li><a href="http://v4.torrentleech.org">V4 TL</a></li>
+                        <li><a href="/profile/fake_user/marketplace">Marketplace</a></li>
+                        <li><a href="https://forums.torrentleech.org/t/topic/17734/2">Ublock TL</a></li>
+                        <li><a href="/protonvpn">Get a VPN</a></li>
+                        <li><a href="/seedit4me">Get a Seedbox</a></li>
+                        <li><a href="/user/account/logout">Logout</a></li>
+                    </ul>
+                </li>
+				<!-- Staff Panel-->
+                			
+            </ul>
+        </div>
+    </div>
+	    <div class="container-fluid sub-navbar">
+		<div class="row">
+			<div class="col-md-9 col-sm-8 centerTopBar">
+				<span class="centerTopBar">
+					<span class="link" style="margin-right: 1em;white-space: nowrap;" onclick="window.location.href='/profile/fake_user/view'"><span class="user_superuser">fake_user</span></span>
+                    
+                                            <span class="div-menu-item" onclick="window.location.href='/profile/fake_user/notifications'"><i style="color:#117070;" class="fa fa-bell"></i>
+                            <div style="display: inline-block;" class="tooltip notificatinTooltip">
+                                <div class="tooltip">
+                                    <span class="tooltip-title link">19</span>
+                                    <div class="tooltip-contents notificationTable">
+                                        <table class="table table-striped">
+                                            <tr>
+                                                <td colspan="2"><h3 style="padding:5px; margin:0;">Notifications</h3></td>
+                                            </tr>
+                                                                                            <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/fake_user/achievements">Ratio >= 5.0</a>. Given 500 TL Points for unlocking the "Ratio >= 5.0" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/fake_user/achievements">Downloaded >= 500GB</a>. Given 200 TL Points for unlocking the "Downloaded >= 500GB" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/fake_user/achievements">Visit consecutively for 1 month</a>. Given 500 TL Points for unlocking the "Visit consecutively for 1 month" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/fake_user/achievements">Ratio >= 2.5</a>. Given 300 TL Points for unlocking the "Ratio >= 2.5" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/fake_user/achievements">Uploaded >= 1TB</a>. Given 300 TL Points for unlocking the "Uploaded >= 1TB" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/fake_user/achievements">Visit 14 days consecutively</a>. Given 200 TL Points for unlocking the "Visit 14 days consecutively" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/fake_user/achievements">Visit 7 days consecutively</a>. Given 100 TL Points for unlocking the "Visit 7 days consecutively" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/fake_user/achievements">Earn 10k points</a>. Given 100 TL Points for unlocking the "Earn 10k points" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/fake_user/achievements">Completed 10 Achievements</a>. Given 1 invite(s) for unlocking the "Completed 10 Achievements" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/fake_user/achievements">Uploaded >= 500GB</a>. Given 200 TL Points for unlocking the "Uploaded >= 500GB" achievement. </td>
+                                                </tr>
+                                                                                            <tr>
+                                                <td colspan="2" align="center">
+                                                    <button class="btn tl-btn btn-success" onclick="window.location.href='/profile/fake_user/notifications'">
+                                                        View All
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </span>
+                        
+                    </span>
+				</span>
+				<span class="centerTopBar">
+                    <span class="menu-info">
+                        <div title="Uploaded (Seeding)" class="div-menu-item">
+                            <i style="color:green;" class="fa fa-arrow-circle-o-up" aria-hidden="true"></i> <span class="link" onclick="window.location.href='/profile/fake_user/seeding'">3.15 TB</span> (289)
+                        </div>
+                        <div title="Downloaded (Leeching)" class="div-menu-item">
+                            <i style="color:red;" class="fa fa-arrow-circle-o-down" aria-hidden="true"></i> <span class="link" onclick="window.location.href='/profile/fake_user/leeching'">575.67 GB</span> (1)
+                        </div>
+                        <div title="Buffer" class="div-menu-item">
+                            <i style="color:green" class="fa fa-refresh" aria-hidden="true"></i> 2.59 TB                        </div>
+                        <div title="Ratio" class="div-menu-item">
+                            <i style="color:green;" class="fa fa-percent" aria-hidden="true"></i> 5.603                        </div>
+                        <div title="Hit and Run" class="div-menu-item">
+                            <span class="link" onclick="window.location.href='/profile/fake_user/hnr'"><i style="color:red" class="fa fa-ban" aria-hidden="true"></i>  13</span>
+                        </div>
+                        <div title="Achievements" class="div-menu-item">
+                            <span class="link" onclick="window.location.href='/profile/fake_user/achievements'"><i class="fa fa-trophy" aria-hidden="true" style="color: #117070;"></i> 19 <sup style="color:red;">new</sup></span>
+                        </div>
+                    </span>
+                    <span class="menu-info">
+                        <div class="div-menu-item"><span class="link" onclick="window.location.href='/profile/fake_user/marketplace'">TL Points: <span class="total-TL-points">33,912.57</span></span></div>
+                        <div class="div-menu-item">Slots: <span style="font-size:18px;">&infin;</span></div>
+                        <div class="div-menu-item"><span class="link" onclick="window.location.href='/profile/fake_user/requests'">Requests: 0</span></div>
+                                                <div class="div-menu-item"><span class="link" onclick="window.location.href='/profile/fake_user/invites'">Invites: 4</span></div>
+                        <div class="div-menu-item"><span class="link" onclick="window.location.href='/profile/fake_user/tickets'">Lottery Tickets 0</div>
+                    </span>
+                </span>
+			</div>
+
+            <div class="col-md-3 col-sm-4 centerTopBar">
+               <div class="">
+                  <span class="centerTopBar div-menu-item topMenuAds">
+                        <i class="fa fa-shield" aria-hidden="true"></i> <span class="link" onclick="window.location.href='/protonvpn'">Get a VPN</span>                    </span>
+                    <span class="centerTopBar div-menu-item topMenuAds">
+                        <i class="fa fa-server" aria-hidden="true"></i> <span class="link" onclick="window.location.href='/seedit4me'">Get a Seedbox</span>
+                    </span>
+                    <span class="centerTopBar div-menu-item topMenuAds">
+                        <span class="link" onclick="window.location.href='/user/account/logout'" title="logout"><i style="color:red; font-size: 16px;" class="fa fa-sign-out" aria-hidden="true"></i>
+                    </span>
+
+                    <span class="day-night div-menu-item centerTopBar">
+                        <i class="fa fa-moon-o"></i>
+                        <span class="clickable">
+                            <i class="fa fa-toggle-on active" id="on" style="display:none"></i>
+                            <i class="fa fa-toggle-on fa-rotate-180 inactive" id="off" style="display:"></i>
+                        </span>
+                        <i class="fa fa-sun-o"></i>
+                    </span>
+               </div>
+            </div>
+            		</div>
+	</div>
+</div>
+
+    <div class="message info text-center ">
+        <a href="/user/donate">
+            Support TorrentLeech: Help us with the server costs and gain awesome privileges! Learn more about it here!
+        </a>
+    </div>
+	
+        <div class="message info text-center">
+            <a href="/lottery">
+                <span title="Torrentleech 21st Anniversary Lottery" id="globalClock"></span>
+            </a>
+        </div>
+    
+
+    <!-- admin total stats  -->
+
+    
+    
+
+<!-- PAGE CONTENT -->
+<div class="mt-20 tl-content tl-lights-off has-support-msg ">
+    <script type="text/javascript">
+    var isStaff =  false ;
+	var bookmarkTorrentsUserID = 1234567;
+	var seedboxUserID = 1234567;
+	var userLogUserID = '1234567';
+	var canDeleteUserLog = '';
+    var canViewReports = '';
+</script>
+<div class="profileContainer">
+    
+<div class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-profile-responsive-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+        <div class="navbar-collapse collapse navbar-profile-responsive-collapse">
+			<ul class="nav navbar-nav navbar-menu">
+								<li><a href="/user/messages/index/username/fake_user" class="">Messages</a></li>
+				                                                            <li><a href="/profile/fake_user/gifts" class="">Gifts<sup style="color:red;">new</sup></a></li>
+                                                                        <li><a href="/profile/fake_user/notifications" class="">Notifications</a></li>
+                				<li><a href="/profile/fake_user/view" class="active-route">Profile</a></li>
+				
+								<li><a href="/profile/fake_user/edit" class="">Edit</a></li>
+				                				    <li><a href="/profile/fake_user/achievements" class="">Achievements </a></li>
+                								    <li><a href="/profile/fake_user/snatchlist" class="">Snatchlist</a></li>
+                    <li><a href="/profile/fake_user/seeding" class="">Seeding</a></li>
+                    <li><a href="/profile/fake_user/leeching" class="">Leeching</a></li>
+                				
+								    <li><a href="/profile/fake_user/hnr" class="">H&R</a></li>
+								
+				                				    <li><a href="/profile/fake_user/requests" class="">Personal Requests </a></li>
+												<li><a href="/profile/fake_user/invites" class="">Invites</a></li>
+								
+								<li><a href="/profile/fake_user/marketplace" class="">Marketplace</a></li>
+				
+								<li><a href="/profile/fake_user/bookmarks" class="">Bookmarks</a></li>
+								
+								<li><a href="/profile/fake_user/seedboxes" class="">Seedboxes</a></li>
+				
+                                    <li><a href="/profile/fake_user/tickets" class="">Lottery Tickets</a></li>
+                                <!-- Staff -->
+
+                
+                <!-- not used anymore, possibly revive later
+                                -->
+
+                
+                
+                
+                
+                
+			</ul>
+        </div>
+        <div class="user-profile-container ">
+                        <div class="container-fluid sub-navbar">
+	<div class="row">
+		<div class="col-md-6 col-md-offset-3 user-profile-background-container">
+			<table class="table table-bordered profileViewTable">
+				<tr>
+					<td>
+						<div class="avatar">
+							<span class="avatar-img img-responsive">
+								<img alt="Avatar" src="/images/default_avatar.jpg" id="profileImg"/>							</span>
+						</div>
+                        <div class="profile-details text-left">
+                            <ul class="list-unstyled profile-list-unstyled">
+                                <li>
+                                    <div class="profile-username  profile-details-item"><span class="user_superuser">fake_user</span></div>
+                                </li>
+                                                                <li>
+                                    <div class="label label-success label-user-class profile-details-item">
+                                        Super User                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+											</td>
+					<td>
+						<div style="float:left;">
+<!--							Rank:<br>-->
+<!--							<span style="margin-left:1em;">Average seed time: --><!--</span><br>-->
+<!--							<span style="margin-left:2em;">--><!--</span><br>-->
+<!--							<span style="margin-left:1em;">Seed size: --><!--</span><br>-->
+<!--							<span style="margin-left:2em;">--><!--</span>-->
+						</div>
+						<div class="profile-info">
+														<div class="profile-uploaded">
+								<i style="color:green;" class="fa fa-arrow-circle-o-up" aria-hidden="true"></i> uploaded:<span class="profile-info-details profile-uploaded-details">3.15 TB</span>
+							</div>
+							<div class="profile-downloaded">
+								<i style="color:red;" class="fa fa-arrow-circle-o-down" aria-hidden="true"></i> downloaded: <span class="profile-info-details">575.67 GB</span>
+							</div>
+							<div class="profile-ratio">
+																<i style="color:green;" class="fa fa-percent" aria-hidden="true"></i> ratio:<span class="profile-info-details profile-ratio-details">5.603</span>
+							</div>
+							<div class="profile-slots">
+								<i class="fa fa-braille"></i> slots:<span class="profile-info-details">&infin;</span>
+							</div>
+						</div>
+					</td>
+				</tr>
+												<tr>
+					<td>Email</td>
+					<td><a href="mailto:[email protected]">[email protected]</a></td>
+				</tr>
+												<tr>
+					<td>Invited by</td>
+					<td><a href="/profile/seedit4mepromo/view">seedit4mepromo</a></td>
+				</tr>
+								<tr>
+					<td>Username</td>
+					<td>fake_user</td>
+				</tr>
+				<tr>
+					<td>Class</td>
+					<td>Super User</td>
+				</tr>
+                
+                				<tr>
+					<td>Registration date</td>
+					<td>Tuesday 4th February 2025</td>
+				</tr>
+								<tr>
+					<td>Last visit</td>
+					<td>Tuesday 23rd December 2025 09:02:30 PM <strong>(Just now)</strong></td>
+				</tr>
+												<tr>
+					<td>Invitations</td>
+					<td>4</td>
+				</tr>
+												<tr>
+					<td>IRC Key</td>
+					<td>xxxxxxxxxxxxxxxxxxxx</td>
+				</tr>
+				
+                                    <tr>
+                        <td>RSS Key</td>
+                        <td>xxxxxxxxxxxxxxxxxxxx</td>
+                    </tr>
+                                                    <tr>
+                        <td>Torrent Passkey</td>
+                        <td>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</td>
+                    </tr>
+                                    				<!--				<tr>-->
+<!--					<td>Forum topics</td>-->
+<!--					<td>--><!--</td>-->
+<!--				</tr>-->
+<!--				<tr>-->
+<!--					<td>Forum posts</td>-->
+<!--					<td>--><!--</td>-->
+<!--				</tr>-->
+				<tr>
+					<td>Torrent comments</td>
+					<td>0</td>
+				</tr>
+					
+				                    <tr>
+                        <td>Has seedbox</td>
+                        <td>No</td>
+                    </tr>
+                    				                                    <tr>
+                        <td colspan="2">
+                            <div class="text-center">
+                                <a class="btn btn-primary tl-btn" href="/torrents/torrent/downloadsnatchlist"> Download all the torrents from your snatchlist</a>
+                            </div>
+                        </td>
+                    </tr>
+                                			</table>
+		</div>
+	</div>
+</div>
+
+
+        </div>
+    </div>
+</div></div>
+</div>
+
+<div id="stop" class="hidden-xs scrollTop">
+    <span><i class="fa fa-5x fa-caret-square-o-up"></i></span>
+</div>
+
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="text/javascript" src="/common.c773b029427556c96b85.js"></script>
+
+<script type="text/javascript" src="/main.2a9d38bb87a5f6798573.js"></script>
+
+
+
+</body>
+</html>

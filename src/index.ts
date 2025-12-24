@@ -1,6 +1,5 @@
 import { parseConfig, getProxyAgent, getExporterConfig } from './config';
 import { PrometheusExporter } from './exporter';
-import { OllamaService } from './services/ollama';
 import { setGlobalDispatcher } from 'undici';
 import { getLogger } from './logger';
 
@@ -22,18 +21,6 @@ async function main() {
     // Given "exporter", usually it runs even if empty.
   } else {
     logger.info(`Loaded configuration for ${configs.length} trackers: ${configs.map(c => c.name).join(', ')}`);
-  }
-
-  // Check if any tracker requires scraping (Ollama)
-  if (configs.some(c => c.type === 'SCRAPING')) {
-    logger.info('Scraping trackers detected. Checking Ollama availability...');
-    const ollama = OllamaService.getInstance();
-    try {
-      await ollama.ensureModelAndConnection();
-    } catch (error) {
-      logger.error('Failed to initialize Ollama. Please ensure Ollama is running and accessible. Exiting...');
-      process.exit(1);
-    }
   }
 
   const exporter = new PrometheusExporter(configs);
