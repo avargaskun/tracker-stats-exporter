@@ -4,7 +4,7 @@ A Prometheus exporter that retrieves user metrics (Upload, Download, Buffer, Rat
 
 The exporter has native support for private trackers running the [Unit3D](https://github.com/HDInnovations/UNIT3D-Community-Edition) engine (e.g., OnlyEncodes, SeedPool, etc.).
 
-For trackers that do not provide an API, you can provide a session cookie and the exporter will scrape the stats from the profile pages using a local LLM model.
+For trackers that do not provide an API, you can provide a session cookie and the exporter will scrape the stats from the profile pages using heuristics.
 
 ## Features
 
@@ -13,7 +13,6 @@ For trackers that do not provide an API, you can provide a session cookie and th
 - **Standard Metrics**: Exposes comprehensive user statistics.
 - **Throttling/Caching**: Configurable cache duration (default 15 minutes, minimum 5 minutes) to respect tracker API limits and avoid bans.
 - **Dockerized**: Ready to deploy in any container environment.
-- **AI-Powered Scraping**: Use a local LLM to extract data from any tracker's profile page.
 
 ## Configuration
 
@@ -31,13 +30,6 @@ Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{O
 | `EXPORTER_PATH` | The path metrics are exposed at | `/metrics` |
 | `STATS_TTL` | Cache duration for stats (min 5m) | `15m` |
 | `LOG_LEVEL` | Logging level (DEBUG, INFO, WARN, ERROR) | `INFO` |
-
-### Ollama Configuration (For Scraping)
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `OLLAMA_HOST` | URL of the Ollama instance | `http://localhost:11434` |
-| `OLLAMA_MODEL` | The model to use for extraction | `gemma3:270m` |
 
 ### Tracker Configuration
 
@@ -66,12 +58,13 @@ You can configure a global proxy that will be used for all tracker requests. Thi
 
 ## Supported Trackers
 
-- **UNIT3D**: Fully supported via API (e.g., OnlyEncodes, SeedPool). The following trackers are known to work:
+- **UNIT3D**: Fully supported via API (e.g., OnlyEncodes, SeedPool). The following trackers are known to work in this mode:
   - OnlyEncodes+ (https://onlyencodes.cc)
   - SeedPool (https://seedpool.org)
   - DarkPeers (https://darkpeers.org)
   - ULCX (https://upload.cx)
-- **Generic Scraping**: Any tracker with a visible stats page can be supported using the `SCRAPING` mode and Ollama.
+- **Generic Scraping**: Any tracker with a visible stats page can be supported using the `SCRAPING` mode. The following trackers are known to work in this mode:
+  - TorrentLeech
 
 ## Metrics
 
@@ -154,76 +147,8 @@ To retrieve the page HTML from the tracker, a session cookie is required for aut
 3. Refresh the page.
 4. Click on the first request (usually the page name).
 5. Under Request Headers, find the `cookie:` field.
-6. Copy the entire value (e.g., `uid=123; pass=abc; ...`) and paste it into your `TRACKER_..._COOKIE` environment variable.
-
-### Setup Ollama
-
-The exporter needs access to a running instance of [Ollama](https://ollama.com/) in order to parse the tracker HTML using LLMs.
-
-> [!NOTE]
-> The exporter will automatically check if the configured `OLLAMA_MODEL` exists on startup and pull it if necessary. This may delay the initial startup.
-
-You can run Ollama locally:
-
-- Using Docker CLI:
-
-```bash
-# Create a network for the containers to communicate
-docker network create inference
-# Start the ollama container and attach to the network
-docker run -d \
-  --name ollama \
-  -v ollama:/root/.ollama \
-  ollama/ollama
-docker network connect inference ollama
-# Then start the exporter
-docker run -d \
-  --name tracker-stats-exporter \
-  -p 9100:9100 \
-  -e OLLAMA_HOST=http://ollama:11434
-  -e TRACKER_OTHERTRACKER_TYPE=SCRAPING \
-  -e TRACKER_OTHERTRACKER_URL=https://othertracker.org/user/profile \
-  -e "TRACKER_OTHERTRACKER_COOKIE=uid=123; pass=abc;" \
-  ghcr.io/avargaskun/tracker-stats-exporter:latest
-docker network connect inference tracker-stats-exporter
-```
-
-- Using Docker Compose
-
-```yaml
-services:
-  ollama:
-    image: ollama/ollama
-    container_name: ollama
-    networks:
-      - inference
-    volumes:
-      - ollama:/root/.ollama
-    restart: unless-stopped
-
-  tracker-stats-exporter:
-    container_name: tracker-stats-exporter
-    image: ghcr.io/avargaskun/tracker-stats-exporter:latest
-    ports:
-      - "9100:9100"
-    networks:
-      - inference
-    environment:
-      - STATS_TTL=1h
-      - OLLAMA_HOST=http://ollama:11434
-      - TRACKER_OTHERTRACKER_TYPE=SCRAPING
-      - TRACKER_OTHERTRACKER_URL=https://othertracker.org/user/profile
-      - TRACKER_OTHERTRACKER_COOKIE=uid=123; pass=abc;
-    restart: unless-stopped
-    depends_on:
-      - ollama
-
-volumes:
-  ollama:
-
-networks:
-  inference: {}
-```
+6. Copy the entire value (e.g., `uid=123; pass=abc; ...`) and save it into a file.
+7. Set the environment variable `TRACKER_..._COOKIE_FILE` to the file containing the cookie value.
 
 ## Development
 

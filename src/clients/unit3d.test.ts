@@ -72,10 +72,10 @@ describe('Unit3DClient', () => {
       downloaded: 500,
       buffer: 100,
       ratio: 2.0,
-      seedbonus: 100,
+      bonus: 100,
       seeding: 10,
       leeching: 2,
-      hit_and_runs: 1
+      hitAndRuns: 1
     });
   });
 
@@ -121,10 +121,10 @@ describe('Unit3DClient', () => {
       downloaded: 50,
       buffer: 10,
       ratio: 2.0,
-      seedbonus: 10,
+      bonus: 10,
       seeding: 1,
       leeching: 0,
-      hit_and_runs: 0
+      hitAndRuns: 0
     });
   });
 
@@ -146,7 +146,7 @@ describe('Unit3DClient', () => {
     });
 
     const stats = await client.getUserStats();
-    expect(stats.seedbonus).toBe(500);
+    expect(stats.bonus).toBe(500);
     expect(stats.seeding).toBe(5);
   });
 
