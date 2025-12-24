@@ -118,5 +118,33 @@ describe('Exporter Configuration', () => {
             const configs = parseConfig();
             expect(configs).toHaveLength(0);
         });
+
+        test('should parse tracker with api key file', () => {
+            process.env.TRACKER_TEST_URL = 'https://test.com';
+            process.env.TRACKER_TEST_API_KEY_FILE = '/path/to/key.txt';
+
+            (fs.readFileSync as jest.Mock).mockReturnValue('key-from-file\n');
+
+            const configs = parseConfig();
+            expect(configs).toHaveLength(1);
+            expect(configs[0]).toMatchObject({
+                name: 'TEST',
+                url: 'https://test.com',
+                apiKey: 'key-from-file',
+                type: 'UNIT3D'
+            });
+            expect(fs.readFileSync).toHaveBeenCalledWith('/path/to/key.txt', 'utf8');
+        });
+
+        test('api key file should take precedence over api key env var', () => {
+            process.env.TRACKER_TEST_URL = 'https://test.com';
+            process.env.TRACKER_TEST_API_KEY = 'direct-key';
+            process.env.TRACKER_TEST_API_KEY_FILE = '/path/to/key.txt';
+
+            (fs.readFileSync as jest.Mock).mockReturnValue('file-key');
+
+            const configs = parseConfig();
+            expect(configs[0].apiKey).toBe('file-key');
+        });
     });
 });
