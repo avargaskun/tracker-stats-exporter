@@ -51,6 +51,8 @@ export class ScrapingClient implements TrackerClient {
                         } catch (e) {
                             this.logger.error(`Failed to write updated cookie to file: ${e}`);
                         }
+                    } else {
+                        this.logger.warn(`Cookie updated for tracker ${this.config.name} but no cookie file configured. The new cookie will be lost on restart.`);
                     }
                 }
             }
