@@ -2,6 +2,8 @@ import { ScrapingClient } from './scraping';
 import { TrackerConfig } from '../config';
 import http from 'http';
 import { AddressInfo } from 'net';
+import fs from 'fs';
+import path from 'path';
 
 describe('ScrapingClient Integration', () => {
     let server: http.Server;
@@ -28,12 +30,21 @@ describe('ScrapingClient Integration', () => {
     beforeAll((done) => {
     // Start a local server to serve the sample HTML
         server = http.createServer((req, res) => {
-            if (req.headers.cookie !== 'uid=123; pass=abc;') {
+            // Check for initial cookie or the updated cookie
+            if (req.headers.cookie !== 'uid=123; pass=abc;' && req.headers.cookie !== 'uid=123; pass=new_pass') {
                 res.writeHead(403);
                 res.end('Unauthorized');
                 return;
             }
-            res.writeHead(200, { 'Content-Type': 'text/html' });
+
+            const headers: http.OutgoingHttpHeaders = { 'Content-Type': 'text/html' };
+
+            // Emulate cookie rotation if a specific query param is set
+            if (req.url?.includes('rotate')) {
+                headers['Set-Cookie'] = 'pass=new_pass; Path=/; HttpOnly';
+            }
+
+            res.writeHead(200, headers);
             res.end(sampleHtml);
         });
 
@@ -90,5 +101,34 @@ describe('ScrapingClient Integration', () => {
         const badClient = new ScrapingClient(badConfig);
 
         await expect(badClient.getUserStats()).rejects.toThrow('Failed to fetch page from TestTracker: 403 Forbidden');
+    });
+
+    it('should update and persist cookie when Set-Cookie header is received', async () => {
+        const tmpDir = fs.mkdtempSync(path.join(process.cwd(), 'tmp-test-'));
+        const cookieFile = path.join(tmpDir, 'cookie.txt');
+        fs.writeFileSync(cookieFile, 'uid=123; pass=abc;');
+
+        const config: TrackerConfig = {
+            name: 'TestTrackerPersistence',
+            url: `http://localhost:${port}/profile?rotate=true`,
+            type: 'SCRAPING',
+            cookie: 'uid=123; pass=abc;',
+            cookieFile: cookieFile
+        };
+
+        const scrapingClient = new ScrapingClient(config);
+
+        // First call triggers the rotation
+        await scrapingClient.getUserStats();
+
+        // Check if internal state updated
+        expect((scrapingClient as any).config.cookie).toContain('pass=new_pass');
+
+        // Check if file was updated
+        const fileContent = fs.readFileSync(cookieFile, 'utf8');
+        expect(fileContent).toContain('pass=new_pass');
+
+        // Cleanup
+        fs.rmSync(tmpDir, { recursive: true, force: true });
     });
 });

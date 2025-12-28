@@ -4,6 +4,8 @@ import { getLogger } from '../logger';
 import { Logger } from 'winston';
 import { fetch } from 'undici';
 import { getUserStats } from '../extractor';
+import { mergeCookies } from '../utils/cookies';
+import fs from 'fs';
 
 export class ScrapingClient implements TrackerClient {
     private config: TrackerConfig;
@@ -32,6 +34,26 @@ export class ScrapingClient implements TrackerClient {
                 },
                 dispatcher
             });
+
+            // Handle cookie updates
+            const setCookie = response.headers.getSetCookie();
+            if (setCookie && setCookie.length > 0) {
+                const newCookieString = mergeCookies(this.config.cookie, setCookie);
+
+                if (newCookieString !== this.config.cookie) {
+                    this.logger.info(`Cookie updated for tracker ${this.config.name}`);
+                    this.config.cookie = newCookieString;
+
+                    if (this.config.cookieFile) {
+                        try {
+                            fs.writeFileSync(this.config.cookieFile, newCookieString, 'utf8');
+                            this.logger.info(`Persisted new cookie to ${this.config.cookieFile}`);
+                        } catch (e) {
+                            this.logger.error(`Failed to write updated cookie to file: ${e}`);
+                        }
+                    }
+                }
+            }
 
             if (!response.ok) {
                 throw new Error(`Failed to fetch page from ${this.config.name}: ${response.status} ${response.statusText}`);
