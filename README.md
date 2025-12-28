@@ -30,6 +30,7 @@ Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{O
 | `EXPORTER_PATH` | The path metrics are exposed at | `/metrics` |
 | `STATS_TTL` | Cache duration for stats (min 5m) | `15m` |
 | `LOG_LEVEL` | Logging level (DEBUG, INFO, WARN, ERROR) | `INFO` |
+| `SCRAPING_USER_AGENT` | User-Agent used by the scraping client | `Mozilla/5.0 ...` |
 
 ### Tracker Configuration
 

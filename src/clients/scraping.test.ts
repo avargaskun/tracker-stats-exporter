@@ -131,4 +131,38 @@ describe('ScrapingClient Integration', () => {
         // Cleanup
         fs.rmSync(tmpDir, { recursive: true, force: true });
     });
+
+    it('should use the configured User-Agent', async () => {
+        const customUA = 'MyCustomUserAgent/1.0';
+        process.env.SCRAPING_USER_AGENT = customUA;
+
+        let capturedUserAgent = '';
+
+        const uaServer = http.createServer((req, res) => {
+            capturedUserAgent = req.headers['user-agent'] || '';
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(sampleHtml);
+        });
+
+        await new Promise<void>((resolve) => {
+            uaServer.listen(0, () => {
+                const uaPort = (uaServer.address() as AddressInfo).port;
+                const config: TrackerConfig = {
+                    name: 'TestTrackerUA',
+                    url: `http://localhost:${uaPort}/profile`,
+                    type: 'SCRAPING',
+                    cookie: 'uid=123; pass=abc;'
+                };
+                client = new ScrapingClient(config);
+                resolve();
+            });
+        });
+
+        await client.getUserStats();
+
+        expect(capturedUserAgent).toBe(customUA);
+
+        uaServer.close();
+        delete process.env.SCRAPING_USER_AGENT;
+    });
 });
