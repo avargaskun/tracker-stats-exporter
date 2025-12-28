@@ -19,10 +19,12 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/cookie": "^0.6.0",
     "@types/filesize-parser": "^1.5.3",
     "@types/jest": "^29.5.12",
     "@types/ms": "^2.1.0",
     "@types/node": "^20.11.24",
+    "@types/set-cookie-parser": "^2.4.10",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
     "eslint": "^8.57.0",
@@ -34,9 +36,11 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "cookie": "^1.1.1",
     "filesize-parser": "^1.5.1",
     "ms": "^2.1.3",
     "prom-client": "^15.1.0",
+    "set-cookie-parser": "^2.7.2",
     "undici": "^7.16.0",
     "winston": "^3.19.0"
   },

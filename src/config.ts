@@ -11,6 +11,7 @@ export interface TrackerConfig {
     apiKey?: string;
     type?: string;
     cookie?: string;
+    cookieFile?: string;
 }
 
 export function parseConfig(): TrackerConfig[] {
@@ -65,6 +66,7 @@ export function parseConfig(): TrackerConfig[] {
         if (cookieFile) {
             try {
                 config.cookie = fs.readFileSync(cookieFile, 'utf8').trim();
+                config.cookieFile = cookieFile;
             } catch (e) {
                 logger.error(`Failed to read cookie file for tracker ${name} at ${cookieFile}: ${e}`);
             }
