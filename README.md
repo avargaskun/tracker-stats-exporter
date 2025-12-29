@@ -58,6 +58,17 @@ You can configure a global proxy that will be used for all tracker requests. Thi
 | `PROXY_USERNAME` | Proxy username (optional) | `myuser` |
 | `PROXY_PASSWORD` | Proxy password (optional) | `mypassword` |
 
+### FlareSolverr Configuration
+
+If you are scraping a tracker that uses Cloudflare, you can configure a [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) instance to bypass the protection.
+
+When a scraping request receives a 403 Forbidden response, the exporter will automatically attempt to solve the challenge using the configured FlareSolverr instance.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `FLARESOLVERR_URL` | The URL of your FlareSolverr instance | _(empty)_ |
+| `FLARESOLVERR_TIMEOUT` | Timeout for the FlareSolverr request | `60s` |
+
 ## Supported Trackers
 
 - **UNIT3D**: Fully supported via API (e.g., OnlyEncodes, SeedPool). The following trackers are known to work in this mode:

@@ -1,10 +1,11 @@
 import { TrackerClient, UserStats } from './tracker';
-import { TrackerConfig, getProxyAgent, getScrapingUserAgent } from '../config';
+import { TrackerConfig, getProxyAgent, getScrapingUserAgent, getFlareSolverrConfig, getProxyConfig } from '../config';
 import { getLogger } from '../logger';
 import { Logger } from 'winston';
 import { fetch } from 'undici';
 import { getUserStats } from '../extractor';
-import { mergeCookies } from '../utils/cookies';
+import { mergeCookies, mergeFlareSolverrCookies } from '../utils/cookies';
+import { solveChallenge } from '../utils/flaresolverr';
 import fs from 'fs';
 
 export class ScrapingClient implements TrackerClient {
@@ -38,21 +39,30 @@ export class ScrapingClient implements TrackerClient {
             // Handle cookie updates
             const setCookie = response.headers.getSetCookie();
             if (setCookie && setCookie.length > 0) {
-                const newCookieString = mergeCookies(this.config.cookie, setCookie);
+                this.updateCookies(mergeCookies(this.config.cookie, setCookie));
+            }
 
-                if (newCookieString !== this.config.cookie) {
-                    this.logger.info(`Cookie updated for tracker ${this.config.name}`);
-                    this.config.cookie = newCookieString;
+            if (response.status === 403) {
+                const flaresolverrConfig = getFlareSolverrConfig();
+                if (flaresolverrConfig) {
+                    this.logger.info(`Received 403 from ${this.config.name}. Attempting to solve challenge via FlareSolverr at ${flaresolverrConfig.url}`);
 
-                    if (this.config.cookieFile) {
-                        try {
-                            fs.writeFileSync(this.config.cookieFile, newCookieString, 'utf8');
-                            this.logger.info(`Persisted new cookie to ${this.config.cookieFile}`);
-                        } catch (e) {
-                            this.logger.error(`Failed to write updated cookie to file: ${e}`);
-                        }
-                    } else {
-                        this.logger.warn(`Cookie updated for tracker ${this.config.name} but no cookie file configured. The new cookie will be lost on restart.`);
+                    try {
+                        const { html, cookies } = await solveChallenge(
+                            flaresolverrConfig.url,
+                            url,
+                            flaresolverrConfig.timeout,
+                            this.config.cookie!,
+                            getProxyConfig()
+                        );
+
+                        this.updateCookies(mergeFlareSolverrCookies(this.config.cookie, cookies));
+                        return getUserStats(html);
+                    } catch (fsError) {
+                         this.logger.error(`FlareSolverr attempt failed: ${fsError}`);
+                         // Fall through to throw original error or new error?
+                         // Throwing the FS error might be more informative if the user configured FS.
+                         throw new Error(`Failed to fetch page from ${this.config.name} (403) and FlareSolverr failed: ${fsError}`);
                     }
                 }
             }
@@ -67,6 +77,24 @@ export class ScrapingClient implements TrackerClient {
         } catch (error) {
             this.logger.error(`Error scraping stats for ${this.config.name}: ${error}`);
             throw error;
+        }
+    }
+
+    private updateCookies(newCookieString: string) {
+        if (newCookieString !== this.config.cookie) {
+            this.logger.info(`Cookie updated for tracker ${this.config.name}`);
+            this.config.cookie = newCookieString;
+
+            if (this.config.cookieFile) {
+                try {
+                    fs.writeFileSync(this.config.cookieFile, newCookieString, 'utf8');
+                    this.logger.info(`Persisted new cookie to ${this.config.cookieFile}`);
+                } catch (e) {
+                    this.logger.error(`Failed to write updated cookie to file: ${e}`);
+                }
+            } else {
+                this.logger.warn(`Cookie updated for tracker ${this.config.name} but no cookie file configured. The new cookie will be lost on restart.`);
+            }
         }
     }
 }

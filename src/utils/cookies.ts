@@ -21,3 +21,18 @@ export function mergeCookies(oldCookie: string = '', setCookieHeader: string | s
         .map(([name, value]) => cookie.serialize(name, value))
         .join('; ');
 }
+
+export function mergeFlareSolverrCookies(oldCookie: string = '', newCookies: { name: string, value: string }[]): string {
+    if (!newCookies || newCookies.length === 0) return oldCookie;
+
+    const cookies = cookie.parse(oldCookie);
+
+    for (const nc of newCookies) {
+        cookies[nc.name] = nc.value;
+    }
+
+    return Object.entries(cookies)
+        .filter((entry): entry is [string, string] => entry[1] !== undefined)
+        .map(([name, value]) => cookie.serialize(name, value))
+        .join('; ');
+}
