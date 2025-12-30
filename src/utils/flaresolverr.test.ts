@@ -84,6 +84,24 @@ describe('solveChallenge', () => {
             .rejects.toThrow('FlareSolverr failed: Browser crashed');
     });
 
+    it('should throw if target site returns error status', async () => {
+        const mockResponse = {
+            status: 'ok',
+            solution: {
+                response: '<html>Error</html>',
+                cookies: [],
+                status: 403
+            }
+        };
+        mockFetch.mockResolvedValue({
+            ok: true,
+            json: jest.fn().mockResolvedValue(mockResponse)
+        });
+
+        await expect(solveChallenge(serviceUrl, targetUrl, timeout, cookies))
+            .rejects.toThrow('Target site returned 403 after FlareSolverr attempt.');
+    });
+
     it('should throw if fetch fails', async () => {
         mockFetch.mockRejectedValue(new Error('Network error'));
 

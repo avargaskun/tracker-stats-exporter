@@ -92,13 +92,9 @@ export async function solveChallenge(
             throw new Error(`FlareSolverr failed: ${data.message}`);
         }
 
-        // Even if status is 'ok', check the solution status code (e.g. might be 503 from the site itself)
-        if (data.solution.status >= 400 && data.solution.status !== 403 && data.solution.status !== 503) {
-             // 503 is often the challenge page itself before solution, but here 'solution.status' *should* be the result after solving.
-             // If it's still 403 or 503, maybe it failed to solve?
-             // However, sometimes we want the content anyway?
-             // For now, let's just log and return.
-             logger.warn(`Target site returned ${data.solution.status} after FlareSolverr attempt.`);
+        // Even if status is 'ok', check the solution status code
+        if (data.solution.status >= 400) {
+             throw new Error(`Target site returned ${data.solution.status} after FlareSolverr attempt.`);
         }
 
         return {
