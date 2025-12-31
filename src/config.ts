@@ -223,6 +223,36 @@ export function getOllamaConfig() {
     };
 }
 
+export interface FlareSolverrConfig {
+    url: string;
+    timeout: number;
+}
+
+export function getFlareSolverrConfig(): FlareSolverrConfig | undefined {
+    const url = process.env.FLARESOLVERR_URL;
+    if (!url) return undefined;
+
+    let timeout = 60000; // Default 60s
+    const timeoutEnv = process.env.FLARESOLVERR_TIMEOUT;
+    if (timeoutEnv) {
+        try {
+            const parsed = ms(timeoutEnv as any);
+            if (typeof parsed === 'number') {
+                timeout = parsed;
+            } else {
+                logger.warn(`Invalid FLARESOLVERR_TIMEOUT format (${timeoutEnv}). Using default 60s.`);
+            }
+        } catch (e) {
+            logger.warn(`Error parsing FLARESOLVERR_TIMEOUT (${timeoutEnv}). Using default 60s.`, e);
+        }
+    }
+
+    return {
+        url,
+        timeout
+    };
+}
+
 export function getScrapingUserAgent(): string {
     return process.env.SCRAPING_USER_AGENT || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 }

@@ -1,9 +1,27 @@
 import { ScrapingClient } from './scraping';
-import { TrackerConfig } from '../config';
+import { TrackerConfig, getFlareSolverrConfig } from '../config';
 import http from 'http';
 import { AddressInfo } from 'net';
 import fs from 'fs';
 import path from 'path';
+import { solveChallenge } from '../utils/flaresolverr';
+
+// Mock getFlareSolverrConfig to verify interaction
+jest.mock('../config', () => {
+    const actual = jest.requireActual('../config');
+    return {
+        ...actual,
+        getFlareSolverrConfig: jest.fn()
+    };
+});
+
+// Mock solveChallenge
+jest.mock('../utils/flaresolverr', () => ({
+    solveChallenge: jest.fn()
+}));
+
+const mockSolveChallenge = solveChallenge as jest.Mock;
+const mockGetFlareSolverrConfig = getFlareSolverrConfig as jest.Mock;
 
 describe('ScrapingClient Integration', () => {
     let server: http.Server;
@@ -67,16 +85,12 @@ describe('ScrapingClient Integration', () => {
         };
 
         client = new ScrapingClient(config);
+        mockGetFlareSolverrConfig.mockReturnValue(undefined);
+        mockSolveChallenge.mockReset();
     });
 
     it('should scrape and extract stats correctly', async () => {
         const stats = await client.getUserStats();
-
-        // 3.03 TB = 3.03 * 1024^4 = 3,331,525,833,523
-        // 575.67 GB = 575.67 * 1024^3 = 618,138,574,356
-    
-        // We expect approximate values due to float math, or we can check parsing logic from extractor
-        // extractor.ts uses 1024 based multipliers.
     
         const expectedUploaded = Math.floor(3.03 * (1024 ** 4));
         const expectedDownloaded = Math.floor(575.67 * (1024 ** 3));
@@ -164,5 +178,73 @@ describe('ScrapingClient Integration', () => {
 
         uaServer.close();
         delete process.env.SCRAPING_USER_AGENT;
+    });
+
+    describe('FlareSolverr Integration', () => {
+        it('should call FlareSolverr on 403 when configured', async () => {
+            const badConfig: TrackerConfig = {
+                name: 'TestTrackerFS',
+                url: `http://localhost:${port}/profile`,
+                type: 'SCRAPING',
+                cookie: 'bad=cookie;' // Causes 403
+            };
+            const fsClient = new ScrapingClient(badConfig);
+
+            mockGetFlareSolverrConfig.mockReturnValue({
+                url: 'http://flaresolverr:8191/v1',
+                timeout: 30000
+            });
+
+            mockSolveChallenge.mockResolvedValue({
+                html: sampleHtml,
+                cookies: [{ name: 'uid', value: '123' }, { name: 'pass', value: 'abc' }]
+            });
+
+            const stats = await fsClient.getUserStats();
+
+            expect(mockSolveChallenge).toHaveBeenCalledWith(
+                'http://flaresolverr:8191/v1',
+                badConfig.url,
+                30000,
+                'bad=cookie;',
+                undefined
+            );
+
+            expect(stats.uploaded).toBeGreaterThan(0);
+        });
+
+        it('should throw if FlareSolverr fails', async () => {
+            const badConfig: TrackerConfig = {
+                name: 'TestTrackerFS',
+                url: `http://localhost:${port}/profile`,
+                type: 'SCRAPING',
+                cookie: 'bad=cookie;'
+            };
+            const fsClient = new ScrapingClient(badConfig);
+
+            mockGetFlareSolverrConfig.mockReturnValue({
+                url: 'http://flaresolverr:8191/v1',
+                timeout: 30000
+            });
+
+            mockSolveChallenge.mockRejectedValue(new Error('FS Timeout'));
+
+            await expect(fsClient.getUserStats()).rejects.toThrow('Failed to fetch page from TestTrackerFS (403) and FlareSolverr failed');
+        });
+
+        it('should not call FlareSolverr if not configured', async () => {
+            const badConfig: TrackerConfig = {
+                name: 'TestTrackerFS',
+                url: `http://localhost:${port}/profile`,
+                type: 'SCRAPING',
+                cookie: 'bad=cookie;'
+            };
+            const fsClient = new ScrapingClient(badConfig);
+
+            mockGetFlareSolverrConfig.mockReturnValue(undefined);
+
+            await expect(fsClient.getUserStats()).rejects.toThrow('Failed to fetch page');
+            expect(mockSolveChallenge).not.toHaveBeenCalled();
+        });
     });
 });
