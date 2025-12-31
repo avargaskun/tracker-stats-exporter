@@ -34,8 +34,6 @@ Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{O
 
 ### Tracker Configuration
 
-> [!NOTE]
-> When extracting stats using scraping rather than API, you should set this variable to the URL of your profile page.
 
 | Variable                      | Description                                             | Default     |
 |-------------------------------|---------------------------------------------------------|-------------|
@@ -132,11 +130,15 @@ services:
     volumes:
       - /path/to/cookie/files:/data
     environment:
-      - STATS_TTL=1h # Recommended to avoid getting banned for excessive traffic
+      # Longer TTL recommended to avoid generating excessive traffic
+      - STATS_TTL=1h
+      # Example of a tracker that uses API key
       - TRACKER_SEEDPOOL_URL=https://seedpool.org
       - TRACKER_SEEDPOOL_API_KEY=abcdef123456
-      - TRACKER_ULCX_URL=https://upload.cx
-      - TRACKER_ULCX_COOKIE_FILE=/data/ulcx.cookie
+      # Example of a tracker that uses HTML scraping
+      - TRACKER_TL_URL=https://www.torrentleech.org/profile/username/view
+      - TRACKER_TL_COOKIE_FILE=/data/tl.cookie
+      - TRACKER_TL_TYPE=SCRAPING
     restart: unless-stopped
 ```
 
@@ -157,7 +159,11 @@ scrape_configs:
 
 To use the `SCRAPING` mode you need to take a few additional configuration steps.
 
-### Manual Cookie Retrieval
+### Tracker URL
+
+When configuring a tracker for web scraping, you should provide the address to your user profile page in the `TRACKER_..._URL` variable. This page usually contains more detailed user stats that the scrapper will read from.
+
+### Initial Cookie Retrieval
 
 To retrieve the page HTML from the tracker, a session cookie is required for authentication. You will need to log into the tracker from a web browser and retrieve the session cookie:
 
@@ -168,6 +174,86 @@ To retrieve the page HTML from the tracker, a session cookie is required for aut
 5. Under Request Headers, find the `cookie:` field.
 6. Copy the entire value (e.g., `uid=123; pass=abc; ...`) and save it into a file.
 7. Set the environment variable `TRACKER_..._COOKIE_FILE` to the file containing the cookie value.
+
+### Cookie Updates
+
+Most trackers will expire the session cookie over time. Expiration time could be anywhere from a few hours to a few days. In most cases, a new cookie will be provided by the tracker when the current session is close to the expiration time. This project will detect this and use the updated session cookie. In order to keep the updated cookie, it will attempt to write the updated value back into the file provided via `TRACKER_..._COOKIE_FILE`. For this reason, it is **important** to ensure the container has read-write access to this file.
+
+## Comprehensive Example
+
+This example demonstrates a complete docker-compose setup with the following configuration:
+
+- [Gluetun](https://github.com/qdm12/gluetun) to provide an HTTP proxy with VPN
+- [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) to handle CloudFlare anti-bot challenges
+
+```yaml
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - VPN_SERVICE_PROVIDER=protonvpn
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+      - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
+    ports:
+      # HTTP proxy
+      - "8888:8888/tcp"
+    volumes:
+      - /dev/net/tun:/dev/net/tun
+    restart: unless-stopped
+    networks:
+      - exporters
+
+  flaresolver:
+    image: flaresolverr/flaresolverr:latest
+    container_name: flaresolver
+    environment:
+      - LOG_LEVEL=info
+      - TZ=UTC
+    ports:
+      - "8191:8191"
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+    networks:
+      - exporters
+
+  tracker-stats-exporter:
+    image: avargaskun/tracker-stats-exporter:latest
+    container_name: tracker-stats-exporter
+    environment:
+      # Longer TTL recommended to avoid generating excessive traffic
+      - STATS_TTL=1h 
+      # Flaresolverr and Proxy configuration
+      - FLARESOLVER_URL=http://flaresolver:8191/v1
+      - PROXY_URL=http://gluetun:8888
+      # Example of a tracker that uses API key
+      - TRACKER_SEEDPOOL_URL=https://seedpool.org
+      - TRACKER_SEEDPOOL_API_KEY=abcdef123456
+      # Example of a tracker that uses HTML scraping
+      - TRACKER_TL_URL=https://www.torrentleech.org/profile/username/view
+      - TRACKER_TL_COOKIE_FILE=/data/tl.cookie
+      - TRACKER_TL_TYPE=SCRAPING
+    ports:
+      - "9100:9100"
+    volumes:
+      # Make sure the container has RW access to the files in this folder
+      # in order to keep cookies up-to-date when the current session rolls over
+      - /path/to/cookie/files:/data
+    depends_on:
+      - gluetun
+      - flaresolver
+    networks:
+      - exporters
+    restart: unless-stopped
+
+networks:
+  exporters:
+    driver: bridge
+```
 
 ## Development
 

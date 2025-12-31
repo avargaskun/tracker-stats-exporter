@@ -233,7 +233,7 @@ describe('ScrapingClient Integration', () => {
         });
 
         it('should not call FlareSolverr if not configured', async () => {
-             const badConfig: TrackerConfig = {
+            const badConfig: TrackerConfig = {
                 name: 'TestTrackerFS',
                 url: `http://localhost:${port}/profile`,
                 type: 'SCRAPING',

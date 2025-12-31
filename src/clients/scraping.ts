@@ -59,10 +59,8 @@ export class ScrapingClient implements TrackerClient {
                         this.updateCookies(mergeFlareSolverrCookies(this.config.cookie, cookies));
                         return getUserStats(html);
                     } catch (fsError) {
-                         this.logger.error(`FlareSolverr attempt failed: ${fsError}`);
-                         // Fall through to throw original error or new error?
-                         // Throwing the FS error might be more informative if the user configured FS.
-                         throw new Error(`Failed to fetch page from ${this.config.name} (403) and FlareSolverr failed: ${fsError}`);
+                        this.logger.error(`FlareSolverr attempt failed: ${fsError}`);
+                        throw new Error(`Failed to fetch page from ${this.config.name} (403) and FlareSolverr failed: ${fsError}`);
                     }
                 }
             }

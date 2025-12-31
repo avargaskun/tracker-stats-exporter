@@ -94,7 +94,7 @@ export async function solveChallenge(
 
         // Even if status is 'ok', check the solution status code
         if (data.solution.status >= 400) {
-             throw new Error(`Target site returned ${data.solution.status} after FlareSolverr attempt.`);
+            throw new Error(`Target site returned ${data.solution.status} after FlareSolverr attempt.`);
         }
 
         return {

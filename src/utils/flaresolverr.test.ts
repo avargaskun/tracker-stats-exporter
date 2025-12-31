@@ -1,6 +1,5 @@
 import { solveChallenge } from './flaresolverr';
 import { fetch } from 'undici';
-import { getLogger } from '../logger';
 
 // Mock dependencies
 jest.mock('undici', () => ({
