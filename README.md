@@ -29,8 +29,12 @@ Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{O
 | `EXPORTER_PORT` | The port the exporter listens on | `9100` |
 | `EXPORTER_PATH` | The path metrics are exposed at | `/metrics` |
 | `STATS_TTL` | Cache duration for stats (min 5m) | `15m` |
+| `FETCH_CONCURRENCY` | Max number of trackers fetched in parallel per refresh | `2` |
+| `REQUEST_TIMEOUT` | Per-request timeout (connect/headers/body) for tracker requests | `30s` |
 | `LOG_LEVEL` | Logging level (DEBUG, INFO, WARN, ERROR) | `INFO` |
 | `SCRAPING_USER_AGENT` | User-Agent used by the scraping client | `Mozilla/5.0 ...` |
+
+**Note on `FETCH_CONCURRENCY` / `REQUEST_TIMEOUT`:** when all tracker requests are routed through a single VPN/proxy tunnel (`PROXY_URL`), firing every tracker at once can saturate the tunnel and trip the connection timeout, making healthy trackers report as down. Fetching a few at a time (`FETCH_CONCURRENCY`) with a generous `REQUEST_TIMEOUT` keeps each request reliable.
 
 ### Tracker Configuration
 
@@ -149,11 +153,17 @@ Add the exporter target to your `prometheus.yml`:
 ```yaml
 scrape_configs:
   - job_name: 'tracker-stats'
+    # The refresh runs synchronously on the first scrape after the cache expires,
+    # so give that scrape enough time to fetch every tracker (see note below).
+    scrape_interval: 5m
+    scrape_timeout: 2m
     static_configs:
       - targets: ['tracker-stats-exporter:9100']
 ```
 
 **Note:** The application caches data for a configurable duration (default 15 minutes, min 5 minutes). Scrape intervals shorter than the configured TTL will return cached data.
+
+**Note on `scrape_timeout`:** the exporter refreshes its data *synchronously inside the `/metrics` handler* on the first scrape after the cache (`STATS_TTL`) expires. That one scrape blocks until every tracker has been fetched — which, over a slow proxy and with `FETCH_CONCURRENCY` limiting parallelism, can take well over Prometheus's default 10s `scrape_timeout`. Set a job-level `scrape_timeout` comfortably above `FETCH_CONCURRENCY` × `REQUEST_TIMEOUT` worst-case (and `scrape_interval` ≥ `scrape_timeout`) so that refresh scrape isn't killed and reported as `up=0`.
 
 ## Scraping Considerations
 

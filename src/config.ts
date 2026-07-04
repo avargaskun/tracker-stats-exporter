@@ -171,7 +171,13 @@ export function getProxyAgent(): ProxyAgent | undefined {
                 logger.warn(`Invalid proxy URL: ${config.url}`);
             }
         }
-        sharedProxyAgent = new ProxyAgent(uri);
+        const timeout = getRequestTimeout();
+        sharedProxyAgent = new ProxyAgent({
+            uri,
+            connect: { timeout },
+            headersTimeout: timeout,
+            bodyTimeout: timeout
+        });
     }
 
     return sharedProxyAgent;
@@ -211,6 +217,42 @@ export function getExporterConfig() {
         metricsPath,
         cacheDuration
     };
+}
+
+export function getRequestTimeout(): number {
+    let timeout = 30000; // Default 30s
+
+    const timeoutEnv = process.env.REQUEST_TIMEOUT;
+    if (timeoutEnv) {
+        try {
+            const parsed = ms(timeoutEnv as any);
+            if (typeof parsed === 'number') {
+                timeout = parsed;
+            } else {
+                logger.warn(`Invalid REQUEST_TIMEOUT format (${timeoutEnv}). Using default 30s.`);
+            }
+        } catch (e) {
+            logger.warn(`Error parsing REQUEST_TIMEOUT (${timeoutEnv}). Using default 30s.`, e);
+        }
+    }
+
+    return timeout;
+}
+
+export function getFetchConcurrency(): number {
+    let concurrency = 2; // Default 2
+
+    const raw = process.env.FETCH_CONCURRENCY;
+    if (raw) {
+        const parsed = parseInt(raw, 10);
+        if (Number.isInteger(parsed) && parsed > 0) {
+            concurrency = parsed;
+        } else {
+            logger.warn(`Invalid FETCH_CONCURRENCY (${raw}). Using default 2.`);
+        }
+    }
+
+    return concurrency;
 }
 
 export function getOllamaConfig() {

@@ -1,4 +1,4 @@
-import { getExporterConfig, parseConfig } from './config';
+import { getExporterConfig, getFetchConcurrency, getRequestTimeout, parseConfig } from './config';
 import fs from 'fs';
 
 jest.mock('fs');
@@ -58,6 +58,45 @@ describe('Exporter Configuration', () => {
             delete process.env.STATS_TTL;
             const config = getExporterConfig();
             expect(config.cacheDuration).toBe(15 * 60 * 1000);
+        });
+    });
+
+    describe('getRequestTimeout', () => {
+        test('should default to 30s when REQUEST_TIMEOUT is unset', () => {
+            delete process.env.REQUEST_TIMEOUT;
+            expect(getRequestTimeout()).toBe(30000);
+        });
+
+        test('should parse a valid duration string', () => {
+            process.env.REQUEST_TIMEOUT = '45s';
+            expect(getRequestTimeout()).toBe(45000);
+        });
+
+        test('should fall back to default on an invalid value', () => {
+            process.env.REQUEST_TIMEOUT = 'not-a-duration';
+            expect(getRequestTimeout()).toBe(30000);
+        });
+    });
+
+    describe('getFetchConcurrency', () => {
+        test('should default to 2 when FETCH_CONCURRENCY is unset', () => {
+            delete process.env.FETCH_CONCURRENCY;
+            expect(getFetchConcurrency()).toBe(2);
+        });
+
+        test('should parse a positive integer', () => {
+            process.env.FETCH_CONCURRENCY = '1';
+            expect(getFetchConcurrency()).toBe(1);
+        });
+
+        test('should fall back to default on a non-positive value', () => {
+            process.env.FETCH_CONCURRENCY = '0';
+            expect(getFetchConcurrency()).toBe(2);
+        });
+
+        test('should fall back to default on a non-numeric value', () => {
+            process.env.FETCH_CONCURRENCY = 'abc';
+            expect(getFetchConcurrency()).toBe(2);
         });
     });
 

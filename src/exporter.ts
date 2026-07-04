@@ -1,8 +1,9 @@
 import * as http from 'http';
 import { Registry, Gauge } from 'prom-client';
 import { createTrackerClient, TrackerClient } from './clients/tracker';
-import { TrackerConfig, getExporterConfig } from './config';
+import { TrackerConfig, getExporterConfig, getFetchConcurrency } from './config';
 import { getLogger } from './logger';
+import { mapWithConcurrency } from './utils/concurrency';
 import { Logger } from 'winston';
 
 export class PrometheusExporter {
@@ -24,6 +25,7 @@ export class PrometheusExporter {
     private lastScrapeTime: number = 0;
     private cacheDuration: number;
     private metricsPath: string;
+    private fetchConcurrency: number;
 
     constructor(configs: TrackerConfig[]) {
         this.configs = configs;
@@ -34,8 +36,9 @@ export class PrometheusExporter {
         const exporterConfig = getExporterConfig();
         this.cacheDuration = exporterConfig.cacheDuration;
         this.metricsPath = exporterConfig.metricsPath;
+        this.fetchConcurrency = getFetchConcurrency();
 
-        this.logger.info(`Initialized exporter with cache duration: ${this.cacheDuration}ms and metrics path: ${this.metricsPath}`);
+        this.logger.info(`Initialized exporter with cache duration: ${this.cacheDuration}ms, fetch concurrency: ${this.fetchConcurrency}, and metrics path: ${this.metricsPath}`);
 
         this.uploadGauge = new Gauge({
             name: 'tracker_upload_bytes',
@@ -112,7 +115,7 @@ export class PrometheusExporter {
 
         this.registry.resetMetrics();
 
-        await Promise.all(this.clients.map(async (client, index) => {
+        await mapWithConcurrency(this.clients, this.fetchConcurrency, async (client, index) => {
             const trackerName = this.configs[index].name;
             try {
                 const stats = await client.getUserStats();
@@ -134,7 +137,7 @@ export class PrometheusExporter {
                 // Log error already handled in client, just set status to 0
                 this.upStatusGauge.set({ tracker: trackerName }, 0);
             }
-        }));
+        });
 
         this.lastScrapeTime = Date.now();
     }
