@@ -70,7 +70,7 @@ export class Unit3DClient implements TrackerClient {
             };
 
         } catch (error) {
-            this.logger.error(`Error fetching stats for ${this.config.name}: ${error}`);
+            this.logger.debug(`Error fetching stats for ${this.config.name}: ${error}`);
             throw error;
         }
     }

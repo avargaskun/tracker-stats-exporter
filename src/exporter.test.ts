@@ -15,12 +15,14 @@ describe('PrometheusExporter', () => {
 
     beforeEach(() => {
         process.env.STATS_TTL = '5m'; // Force 5m cache for tests
+        process.env.FETCH_RETRIES = '0'; // Disable retries by default; the retry path is covered explicitly below
         (createTrackerClient as jest.Mock).mockClear();
         jest.useFakeTimers();
     });
 
     afterEach(() => {
         delete process.env.STATS_TTL;
+        delete process.env.FETCH_RETRIES;
         jest.useRealTimers();
     });
 
@@ -93,5 +95,32 @@ describe('PrometheusExporter', () => {
 
         const exporter = new PrometheusExporter(configs);
         await expect(exporter.updateMetrics()).resolves.not.toThrow();
+    });
+
+    it('retries a transiently failing tracker fetch before succeeding', async () => {
+        process.env.FETCH_RETRIES = '2';
+        const mockGetUserStats = jest.fn()
+            .mockRejectedValueOnce(new Error('transient'))
+            .mockResolvedValue({
+                uploaded: 1000,
+                downloaded: 500,
+                buffer: 0,
+                ratio: 2.0,
+                bonus: 100,
+                seeding: 5,
+                leeching: 0,
+                hitAndRuns: 0
+            });
+
+        (createTrackerClient as jest.Mock).mockImplementation(() => ({
+            getUserStats: mockGetUserStats
+        }));
+
+        const exporter = new PrometheusExporter(configs);
+        const promise = exporter.updateMetrics();
+        await jest.runAllTimersAsync();
+        await expect(promise).resolves.not.toThrow();
+
+        expect(mockGetUserStats).toHaveBeenCalledTimes(2);
     });
 });

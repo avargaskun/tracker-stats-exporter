@@ -73,7 +73,7 @@ export class ScrapingClient implements TrackerClient {
             return getUserStats(html);
 
         } catch (error) {
-            this.logger.error(`Error scraping stats for ${this.config.name}: ${error}`);
+            this.logger.debug(`Error scraping stats for ${this.config.name}: ${error}`);
             throw error;
         }
     }

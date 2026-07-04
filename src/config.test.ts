@@ -1,4 +1,4 @@
-import { getExporterConfig, getFetchConcurrency, getRequestTimeout, parseConfig } from './config';
+import { getExporterConfig, getFetchConcurrency, getFetchRetries, getRequestTimeout, parseConfig } from './config';
 import fs from 'fs';
 
 jest.mock('fs');
@@ -97,6 +97,33 @@ describe('Exporter Configuration', () => {
         test('should fall back to default on a non-numeric value', () => {
             process.env.FETCH_CONCURRENCY = 'abc';
             expect(getFetchConcurrency()).toBe(2);
+        });
+    });
+
+    describe('getFetchRetries', () => {
+        test('should default to 3 when FETCH_RETRIES is unset', () => {
+            delete process.env.FETCH_RETRIES;
+            expect(getFetchRetries()).toBe(3);
+        });
+
+        test('should parse a positive integer', () => {
+            process.env.FETCH_RETRIES = '5';
+            expect(getFetchRetries()).toBe(5);
+        });
+
+        test('should allow 0 to disable retries', () => {
+            process.env.FETCH_RETRIES = '0';
+            expect(getFetchRetries()).toBe(0);
+        });
+
+        test('should fall back to default on a negative value', () => {
+            process.env.FETCH_RETRIES = '-1';
+            expect(getFetchRetries()).toBe(3);
+        });
+
+        test('should fall back to default on a non-numeric value', () => {
+            process.env.FETCH_RETRIES = 'abc';
+            expect(getFetchRetries()).toBe(3);
         });
     });
 
