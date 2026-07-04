@@ -31,10 +31,13 @@ Where `{NAME}` is a unique identifier for the tracker (e.g., `SEEDPOOL`) and `{O
 | `STATS_TTL` | Cache duration for stats (min 5m) | `15m` |
 | `FETCH_CONCURRENCY` | Max number of trackers fetched in parallel per refresh | `2` |
 | `REQUEST_TIMEOUT` | Per-request timeout (connect/headers/body) for tracker requests | `30s` |
+| `FETCH_RETRIES` | Retries per tracker after a failed fetch (`0` disables) | `3` |
 | `LOG_LEVEL` | Logging level (DEBUG, INFO, WARN, ERROR) | `INFO` |
 | `SCRAPING_USER_AGENT` | User-Agent used by the scraping client | `Mozilla/5.0 ...` |
 
 **Note on `FETCH_CONCURRENCY` / `REQUEST_TIMEOUT`:** when all tracker requests are routed through a single VPN/proxy tunnel (`PROXY_URL`), firing every tracker at once can saturate the tunnel and trip the connection timeout, making healthy trackers report as down. Fetching a few at a time (`FETCH_CONCURRENCY`) with a generous `REQUEST_TIMEOUT` keeps each request reliable.
+
+**Note on `FETCH_RETRIES`:** the refresh runs once per `STATS_TTL` and its result is cached, so a *single* momentary failure (e.g. a brief proxy-tunnel blip) would otherwise mark a healthy tracker down for the whole TTL. Each tracker fetch is retried up to `FETCH_RETRIES` times with exponential backoff (150ms, doubling, capped at 1500ms) before it is reported as down; `0` restores the single-attempt behavior. Because the refresh is synchronous inside `/metrics`, retries add to the worst-case scrape time — keep `scrape_timeout` above roughly `FETCH_CONCURRENCY × (FETCH_RETRIES + 1) × REQUEST_TIMEOUT` (a shorter `REQUEST_TIMEOUT` pairs well with retries). For `SCRAPING` trackers, a retry re-runs the whole fetch, so a *persistent* 403 will invoke FlareSolverr on each attempt.
 
 ### Tracker Configuration
 
@@ -163,7 +166,7 @@ scrape_configs:
 
 **Note:** The application caches data for a configurable duration (default 15 minutes, min 5 minutes). Scrape intervals shorter than the configured TTL will return cached data.
 
-**Note on `scrape_timeout`:** the exporter refreshes its data *synchronously inside the `/metrics` handler* on the first scrape after the cache (`STATS_TTL`) expires. That one scrape blocks until every tracker has been fetched — which, over a slow proxy and with `FETCH_CONCURRENCY` limiting parallelism, can take well over Prometheus's default 10s `scrape_timeout`. Set a job-level `scrape_timeout` comfortably above `FETCH_CONCURRENCY` × `REQUEST_TIMEOUT` worst-case (and `scrape_interval` ≥ `scrape_timeout`) so that refresh scrape isn't killed and reported as `up=0`.
+**Note on `scrape_timeout`:** the exporter refreshes its data *synchronously inside the `/metrics` handler* on the first scrape after the cache (`STATS_TTL`) expires. That one scrape blocks until every tracker has been fetched — which, over a slow proxy and with `FETCH_CONCURRENCY` limiting parallelism, can take well over Prometheus's default 10s `scrape_timeout`. Set a job-level `scrape_timeout` comfortably above `FETCH_CONCURRENCY` × `(FETCH_RETRIES + 1)` × `REQUEST_TIMEOUT` worst-case (and `scrape_interval` ≥ `scrape_timeout`) so that refresh scrape isn't killed and reported as `up=0`.
 
 ## Scraping Considerations
 

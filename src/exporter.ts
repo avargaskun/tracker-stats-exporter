@@ -1,9 +1,10 @@
 import * as http from 'http';
 import { Registry, Gauge } from 'prom-client';
 import { createTrackerClient, TrackerClient } from './clients/tracker';
-import { TrackerConfig, getExporterConfig, getFetchConcurrency } from './config';
+import { TrackerConfig, getExporterConfig, getFetchConcurrency, getFetchRetries } from './config';
 import { getLogger } from './logger';
 import { mapWithConcurrency } from './utils/concurrency';
+import { withRetry } from './utils/retry';
 import { Logger } from 'winston';
 
 export class PrometheusExporter {
@@ -26,6 +27,7 @@ export class PrometheusExporter {
     private cacheDuration: number;
     private metricsPath: string;
     private fetchConcurrency: number;
+    private fetchRetries: number;
 
     constructor(configs: TrackerConfig[]) {
         this.configs = configs;
@@ -37,8 +39,9 @@ export class PrometheusExporter {
         this.cacheDuration = exporterConfig.cacheDuration;
         this.metricsPath = exporterConfig.metricsPath;
         this.fetchConcurrency = getFetchConcurrency();
+        this.fetchRetries = getFetchRetries();
 
-        this.logger.info(`Initialized exporter with cache duration: ${this.cacheDuration}ms, fetch concurrency: ${this.fetchConcurrency}, and metrics path: ${this.metricsPath}`);
+        this.logger.info(`Initialized exporter with cache duration: ${this.cacheDuration}ms, fetch concurrency: ${this.fetchConcurrency}, fetch retries: ${this.fetchRetries}, and metrics path: ${this.metricsPath}`);
 
         this.uploadGauge = new Gauge({
             name: 'tracker_upload_bytes',
@@ -118,7 +121,11 @@ export class PrometheusExporter {
         await mapWithConcurrency(this.clients, this.fetchConcurrency, async (client, index) => {
             const trackerName = this.configs[index].name;
             try {
-                const stats = await client.getUserStats();
+                const stats = await withRetry(() => client.getUserStats(), {
+                    retries: this.fetchRetries,
+                    onRetry: (attempt, delayMs, error) =>
+                        this.logger.warn(`Retry ${attempt}/${this.fetchRetries} for ${trackerName} in ${delayMs}ms after: ${error}`)
+                });
 
                 if (stats.uploaded !== undefined) this.uploadGauge.set({ tracker: trackerName }, stats.uploaded);
                 if (stats.downloaded !== undefined) this.downloadGauge.set({ tracker: trackerName }, stats.downloaded);

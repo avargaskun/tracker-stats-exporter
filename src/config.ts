@@ -255,6 +255,22 @@ export function getFetchConcurrency(): number {
     return concurrency;
 }
 
+export function getFetchRetries(): number {
+    let retries = 3; // Default 3 (0 disables retries)
+
+    const raw = process.env.FETCH_RETRIES;
+    if (raw) {
+        const parsed = parseInt(raw, 10);
+        if (Number.isInteger(parsed) && parsed >= 0) {
+            retries = parsed;
+        } else {
+            logger.warn(`Invalid FETCH_RETRIES (${raw}). Using default 3.`);
+        }
+    }
+
+    return retries;
+}
+
 export function getOllamaConfig() {
     const host = process.env.OLLAMA_HOST || 'http://localhost:11434';
     const model = process.env.OLLAMA_MODEL || 'gemma3:270m';
